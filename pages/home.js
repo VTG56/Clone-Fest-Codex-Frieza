@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Heart, MessageCircle, Share2, Bookmark, Home, PlusSquare, User, Settings, Menu, X, UploadCloud,
-    Type, Image as ImageIcon, Video, Mic, Link as LinkIcon, MessageSquare, Loader2
+    Type, Image as ImageIcon, Video, Mic, Link as LinkIcon, MessageSquare, Loader2, Send, Twitter, Copy
 } from 'lucide-react';
 
 // --- Firebase SDK Imports ---
 import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 // --- Local Firebase Imports ---
@@ -58,7 +58,114 @@ const Footer = () => (
     </footer>
 );
 
-const PostCard = ({ post }) => {
+const PostCard = ({ post, user }) => {
+    const [showComments, setShowComments] = useState(false);
+    const [comments, setComments] = useState([]);
+    const [isLoadingComments, setIsLoadingComments] = useState(false);
+    const [newComment, setNewComment] = useState("");
+    const [isCommenting, setIsCommenting] = useState(false);
+    const [showShareOptions, setShowShareOptions] = useState(false);
+    const shareRef = useRef(null);
+
+    const hasLiked = useMemo(() => Array.isArray(post.likes) && post.likes.includes(user?.uid), [post.likes, user?.uid]);
+    
+    const firestorePath = `artifacts/${appId}/public/data/posts`;
+    const postRef = doc(db, firestorePath, post.id);
+
+    // Close share options if clicked outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (shareRef.current && !shareRef.current.contains(event.target)) {
+                setShowShareOptions(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [shareRef]);
+
+    const handleLike = async () => {
+        if (!user) return;
+        if (hasLiked) {
+            await updateDoc(postRef, { likes: arrayRemove(user.uid) });
+        } else {
+            await updateDoc(postRef, { likes: arrayUnion(user.uid) });
+        }
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: `Check out this post on CyberFeed!`,
+            text: `Post by ${post.author.displayName}`,
+            url: window.location.href,
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (error) {
+                console.error('Error using Web Share API:', error);
+            }
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            setShowShareOptions(prev => !prev);
+        }
+    };
+
+    const copyToClipboard = () => {
+        const url = window.location.href;
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+        }
+        document.body.removeChild(textArea);
+        setShowShareOptions(false);
+    };
+
+    const handlePostComment = async (e) => {
+        e.preventDefault();
+        if (!user || !newComment.trim()) return;
+        setIsCommenting(true);
+        const commentsPath = `${firestorePath}/${post.id}/comments`;
+        try {
+            await addDoc(collection(db, commentsPath), {
+                author: {
+                    uid: user.uid,
+                    displayName: user.displayName || 'CyberUser',
+                    photoURL: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`
+                },
+                text: newComment,
+                timestamp: serverTimestamp()
+            });
+            await updateDoc(postRef, { comments: increment(1) });
+            setNewComment("");
+        } catch (error) {
+            console.error("Error posting comment:", error);
+        } finally {
+            setIsCommenting(false);
+        }
+    };
+
+    useEffect(() => {
+        if (showComments) {
+            setIsLoadingComments(true);
+            const commentsPath = `artifacts/${appId}/public/data/posts/${post.id}/comments`;
+            const q = query(collection(db, commentsPath), orderBy("timestamp", "desc"));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const commentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setComments(commentsData);
+                setIsLoadingComments(false);
+            });
+            return () => unsubscribe();
+        }
+    }, [showComments, post.id]);
+
     const renderContent = () => {
         switch (post.type) {
             case 'Photo':
@@ -109,7 +216,7 @@ const PostCard = ({ post }) => {
                 return <p className="text-gray-300 whitespace-pre-wrap">{post.content.text}</p>;
         }
     };
-    
+
     return (
         <motion.div
             layout
@@ -117,40 +224,126 @@ const PostCard = ({ post }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="group relative bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden hover:border-purple-500/50 transition-all duration-500 p-6"
+            className="group bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden hover:border-purple-500/50 transition-all duration-500"
         >
-            <div className="flex items-center mb-4">
-                <img src={post.author.photoURL} alt={post.author.displayName} className="w-10 h-10 rounded-full border-2 border-purple-500/30"/>
-                <div className="ml-3">
-                    <p className="text-white font-medium">{post.author.displayName}</p>
-                    <p className="text-gray-400 text-sm">{post.timestamp?.toDate().toLocaleString()}</p>
+            <div className="p-6">
+                <div className="flex items-center mb-4">
+                    <img src={post.author.photoURL} alt={post.author.displayName} className="w-10 h-10 rounded-full border-2 border-purple-500/30"/>
+                    <div className="ml-3">
+                        <p className="text-white font-medium">{post.author.displayName}</p>
+                        <p className="text-gray-400 text-sm">{post.timestamp?.toDate().toLocaleString()}</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div className="mb-4">
-                {renderContent()}
-            </div>
+                
+                <div className="mb-4">
+                    {renderContent()}
+                </div>
 
-            {post.tags && post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags.map(tag => (
-                        <span key={tag} className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full border border-purple-500/30">#{tag}</span>
-                    ))}
-                </div>
-            )}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-700/50">
-                <div className="flex items-center space-x-4">
-                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="flex items-center space-x-2 text-gray-400 hover:text-red-400 transition-colors"><Heart className="w-5 h-5" /><span className="text-sm">{post.likes}</span></motion.button>
-                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="flex items-center space-x-2 text-gray-400 hover:text-blue-400 transition-colors"><MessageCircle className="w-5 h-5" /><span className="text-sm">{post.comments}</span></motion.button>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-gray-400 hover:text-green-400 transition-colors"><Share2 className="w-5 h-5" /></motion.button>
-                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-gray-400 hover:text-yellow-400 transition-colors"><Bookmark className="w-5 h-5" /></motion.button>
+                {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {post.tags.map(tag => (
+                            <span key={tag} className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full border border-purple-500/30">#{tag}</span>
+                        ))}
+                    </div>
+                )}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-700/50">
+                    <div className="flex items-center space-x-4">
+                        <motion.button onClick={handleLike} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className={`flex items-center space-x-2 transition-colors ${hasLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}>
+                            <Heart className={`w-5 h-5 ${hasLiked ? 'fill-current' : ''}`} />
+                            <span className="text-sm font-semibold">{post.likes?.length || 0}</span>
+                        </motion.button>
+                        <motion.button onClick={() => setShowComments(!showComments)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="flex items-center space-x-2 text-gray-400 hover:text-blue-400 transition-colors">
+                            <MessageCircle className="w-5 h-5" />
+                            <span className="text-sm font-semibold">{post.comments || 0}</span>
+                        </motion.button>
+                    </div>
+                    <div className="flex items-center space-x-2 relative" ref={shareRef}>
+                        <motion.button onClick={handleShare} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-gray-400 hover:text-green-400 transition-colors">
+                            <Share2 className="w-5 h-5" />
+                        </motion.button>
+                        <AnimatePresence>
+                        {showShareOptions && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute bottom-full right-0 mb-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-2 z-10"
+                            >
+                                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out this post by ${post.author.displayName}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
+                                    <Twitter className="w-4 h-4 mr-2" /> Share on Twitter
+                                </a>
+                                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this post by ${post.author.displayName}: ${window.location.href}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
+                                    <MessageSquare className="w-4 h-4 mr-2" /> Share on WhatsApp
+                                </a>
+                                <button onClick={copyToClipboard} className="w-full flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
+                                    <Copy className="w-4 h-4 mr-2" /> Copy Link
+                                </button>
+                            </motion.div>
+                        )}
+                        </AnimatePresence>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-gray-400 hover:text-yellow-400 transition-colors">
+                            <Bookmark className="w-5 h-5" />
+                        </motion.button>
+                    </div>
                 </div>
             </div>
+            <AnimatePresence>
+            {showComments && (
+                <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="bg-gray-900/50 px-6 pt-4 pb-6 border-t border-gray-700/50"
+                >
+                    <h4 className="font-bold text-white mb-4">Comments</h4>
+                    {user && (
+                        <form onSubmit={handlePostComment} className="flex items-start space-x-3 mb-4">
+                            <img src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`} alt="Your avatar" className="w-9 h-9 rounded-full"/>
+                            <div className="flex-1 relative">
+                                <textarea
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    placeholder="Add a comment..."
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 pr-10 text-white focus:ring-1 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                                    rows="1"
+                                    onInput={(e) => {
+                                        e.target.style.height = 'auto';
+                                        e.target.style.height = `${e.target.scrollHeight}px`;
+                                    }}
+                                />
+                                <button type="submit" disabled={isCommenting || !newComment.trim()} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-purple-400 disabled:opacity-50">
+                                    {isCommenting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5"/>}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+                    <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
+                        {isLoadingComments ? (
+                            <p className="text-gray-400">Loading comments...</p>
+                        ) : comments.length > 0 ? (
+                            comments.map(comment => (
+                                <div key={comment.id} className="flex items-start space-x-3">
+                                    <img src={comment.author.photoURL} alt={comment.author.displayName} className="w-9 h-9 rounded-full"/>
+                                    <div className="flex-1 bg-gray-800 rounded-lg p-3">
+                                        <div className="flex items-center justify-between">
+                                            <p className="font-semibold text-white text-sm">{comment.author.displayName}</p>
+                                            <p className="text-xs text-gray-500">{comment.timestamp?.toDate().toLocaleTimeString()}</p>
+                                        </div>
+                                        <p className="text-gray-300 mt-1">{comment.text}</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-gray-400">No comments yet.</p>
+                        )}
+                    </div>
+                </motion.div>
+            )}
+            </AnimatePresence>
         </motion.div>
     );
 };
+
 
 const CreatePostModal = ({ isOpen, onClose, user, onPostCreated }) => {
     const [step, setStep] = useState(1);
@@ -234,7 +427,7 @@ const CreatePostModal = ({ isOpen, onClose, user, onPostCreated }) => {
                 type: postType,
                 content: finalContent,
                 tags: content.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-                likes: 0,
+                likes: [],
                 comments: 0,
                 timestamp: serverTimestamp()
             });
@@ -481,7 +674,7 @@ const HomePage = () => {
                             <div className="space-y-6">
                                 <AnimatePresence>
                                     {isLoading ? ( <p>Loading feed...</p> ) : (
-                                        posts.map((post) => ( <PostCard key={post.id} post={post} /> ))
+                                        posts.map((post) => ( <PostCard key={post.id} post={post} user={user} /> ))
                                     )}
                                 </AnimatePresence>
                             </div>
@@ -495,3 +688,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
