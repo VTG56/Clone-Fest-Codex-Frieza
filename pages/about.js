@@ -225,7 +225,7 @@ export default function About() {
                   </>
                 ) : (
                   <button
-                    onClick={() => router.push('/dashboard')}
+                    onClick={() => router.push('/')}
                     className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
                   >
                     Go to Dashboard

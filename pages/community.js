@@ -111,7 +111,7 @@ const CommunityPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 whileHover={{ scale: 1.02 }}
               >
-                <img
+                <Image
                   src={post.image}
                   alt={post.title}
                   className="w-full h-48 object-cover"

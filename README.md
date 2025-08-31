@@ -76,8 +76,8 @@ Uploader → Multiple files in a gallery
 
 🚀 Getting Started
 1. Clone the repo
-git clone https://github.com/VTG56/Clone-Fest-Codex-Frieza.git
-cd Clone-Fest-Codex-Frieza
+git clone https://github.com/VTG56/student-registration-app-67741.git
+cd student-registration-app-67741
 
 2. Install dependencies
 npm install

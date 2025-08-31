@@ -16,7 +16,7 @@ const HomePage = () => {
   const username = "CyberUser";
 
   // Mock posts data
-  const mockPosts = [
+  const mockPosts = useMemo(() => [
     {
       id: 1,
       author: "TechMaster",
@@ -52,12 +52,13 @@ const HomePage = () => {
       timestamp: "6 hours ago",
       tags: ["firebase", "backend", "scaling"]
     }
-  ];
+  ], []);
+  
 
   useEffect(() => {
-    // Simulate initial load
     setPosts(mockPosts);
-  }, []);
+}, [mockPosts]);
+
 
   const loadMorePosts = () => {
     setIsLoading(true);
