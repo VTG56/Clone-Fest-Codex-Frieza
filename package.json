@@ -3,13 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev --turbopack",
-  "build": "next build --turbopack",
-  "start": "next start",
-  "lint": "eslint",
-  "export": "next export"
-},
-
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint",
+    "export": "next export"
+  },
   "dependencies": {
     "firebase": "^12.2.1",
     "framer-motion": "^12.23.12",
