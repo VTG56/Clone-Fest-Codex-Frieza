@@ -3,64 +3,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Heart, MessageCircle, Share2, Bookmark, Filter, Hash, TrendingUp,
-    Home, PlusSquare, User, Settings, Menu, X, UploadCloud,
-    Type, Image as ImageIcon, Video, Mic, Link as LinkIcon, MessageSquare
+    Heart, MessageCircle, Share2, Bookmark, Home, PlusSquare, User, Settings, Menu, X, UploadCloud,
+    Type, Image as ImageIcon, Video, Mic, Link as LinkIcon, MessageSquare, Loader2
 } from 'lucide-react';
 
-// --- Firebase Mocks/Placeholders ---
-// In a real app, you would import these from the Firebase SDK
-// and initialize your app properly.
-const mockPostsData = [
-    {
-        id: 1,
-        author: "TechMaster",
-        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face",
-        timestamp: { toDate: () => new Date(Date.now() - 2 * 60 * 60 * 1000) }, // 2 hours ago
-        type: 'Photo',
-        content: {
-            text: "Exploring the latest trends in Next.js and serverless architecture...",
-            url: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=300&fit=crop",
-        },
-        tags: ["webdev", "nextjs", "tech"],
-        likes: 42,
-        comments: 8,
-    },
-    {
-        id: 2,
-        author: "DesignGuru",
-        avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
-        timestamp: { toDate: () => new Date(Date.now() - 4 * 60 * 60 * 1000) }, // 4 hours ago
-        type: 'Quote',
-        content: {
-            quote: "Design is not just what it looks like and feels like. Design is how it works.",
-            source: "Steve Jobs"
-        },
-        tags: ["design", "ui", "cyberpunk"],
-        likes: 67,
-        comments: 15,
-    }
-];
+// --- Firebase SDK Imports ---
+import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
-const db = {
-    collection: () => ({
-        onSnapshot: (callback) => {
-            console.log("Firestore onSnapshot mock called. Returning mock posts.");
-            callback({
-                docs: mockPostsData.map(post => ({
-                    id: post.id.toString(),
-                    data: () => post
-                }))
-            });
-            return () => console.log("Unsubscribed from Firestore mock.");
-        }
-    })
-};
-const storage = {}; // Mock storage object
+// --- Local Firebase Imports ---
+import { auth, db, storage } from '../lib/firebase';
+
+
+// --- Environment App ID ---
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
 
 // NOTE: Components are kept in one file for this environment.
-const Navbar = ({ onMenuClick }) => (
+const Navbar = ({ onMenuClick, user }) => (
     <nav className="sticky top-0 z-30 bg-gray-900/50 backdrop-blur-lg border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
@@ -77,7 +38,11 @@ const Navbar = ({ onMenuClick }) => (
                     <a href="#" className="text-gray-300 hover:text-white transition-colors">Community</a>
                 </div>
                 <div className="flex items-center">
-                     <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face" alt="User Profile" className="w-8 h-8 rounded-full"/>
+                     {user ? (
+                         <img src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`} alt="User Profile" className="w-8 h-8 rounded-full"/>
+                     ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse"></div>
+                     )}
                      <button className="ml-4 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">Logout</button>
                 </div>
             </div>
@@ -99,7 +64,7 @@ const PostCard = ({ post }) => {
             case 'Photo':
                 return (
                     <>
-                        <p className="text-gray-300 mb-4">{post.content.text}</p>
+                        <p className="text-gray-300 mb-4 whitespace-pre-wrap">{post.content.text}</p>
                         <div className="relative h-64 overflow-hidden rounded-lg">
                             <img src={post.content.url} alt="Post content" className="w-full h-full object-cover"/>
                         </div>
@@ -108,7 +73,7 @@ const PostCard = ({ post }) => {
             case 'Video':
                  return (
                     <>
-                        <p className="text-gray-300 mb-4">{post.content.text}</p>
+                        <p className="text-gray-300 mb-4 whitespace-pre-wrap">{post.content.text}</p>
                         <video controls className="w-full rounded-lg">
                             <source src={post.content.url} type="video/mp4" />
                             Your browser does not support the video tag.
@@ -118,7 +83,7 @@ const PostCard = ({ post }) => {
             case 'Audio':
                 return (
                     <>
-                         <p className="text-gray-300 mb-4">{post.content.text}</p>
+                         <p className="text-gray-300 mb-4 whitespace-pre-wrap">{post.content.text}</p>
                          <audio controls className="w-full">
                             <source src={post.content.url} type="audio/mpeg" />
                             Your browser does not support the audio element.
@@ -134,14 +99,14 @@ const PostCard = ({ post }) => {
                 );
             case 'Link':
                 return (
-                     <a href={post.content.link} target="_blank" rel="noopener noreferrer" className="block p-4 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg">
+                     <a href={post.content.url} target="_blank" rel="noopener noreferrer" className="block p-4 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg">
                         <p className="text-gray-400 mb-2">Link</p>
-                        <p className="text-purple-400 font-bold truncate">{post.content.link}</p>
-                        {post.content.text && <p className="text-gray-300 mt-2">{post.content.text}</p>}
+                        <p className="text-purple-400 font-bold truncate">{post.content.url}</p>
+                        {post.content.text && <p className="text-gray-300 mt-2 whitespace-pre-wrap">{post.content.text}</p>}
                     </a>
                 );
             default: // Text post
-                return <p className="text-gray-300">{post.content.text}</p>;
+                return <p className="text-gray-300 whitespace-pre-wrap">{post.content.text}</p>;
         }
     };
     
@@ -155,9 +120,9 @@ const PostCard = ({ post }) => {
             className="group relative bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden hover:border-purple-500/50 transition-all duration-500 p-6"
         >
             <div className="flex items-center mb-4">
-                <img src={post.avatar} alt={post.author} className="w-10 h-10 rounded-full border-2 border-purple-500/30"/>
+                <img src={post.author.photoURL} alt={post.author.displayName} className="w-10 h-10 rounded-full border-2 border-purple-500/30"/>
                 <div className="ml-3">
-                    <p className="text-white font-medium">{post.author}</p>
+                    <p className="text-white font-medium">{post.author.displayName}</p>
                     <p className="text-gray-400 text-sm">{post.timestamp?.toDate().toLocaleString()}</p>
                 </div>
             </div>
@@ -166,7 +131,7 @@ const PostCard = ({ post }) => {
                 {renderContent()}
             </div>
 
-            {post.tags && (
+            {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                     {post.tags.map(tag => (
                         <span key={tag} className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full border border-purple-500/30">#{tag}</span>
@@ -187,20 +152,18 @@ const PostCard = ({ post }) => {
     );
 };
 
-const CreatePostModal = ({ isOpen, onClose }) => {
+const CreatePostModal = ({ isOpen, onClose, user, onPostCreated }) => {
     const [step, setStep] = useState(1);
     const [postType, setPostType] = useState(null);
     const [file, setFile] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
+    const [content, setContent] = useState({ text: '', url: '', quote: '', source: '', tags: '' });
+    const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef(null);
 
     const postTypes = [
-        { name: 'Text', icon: Type },
-        { name: 'Photo', icon: ImageIcon },
-        { name: 'Video', icon: Video },
-        { name: 'Audio', icon: Mic },
-        { name: 'Link', icon: LinkIcon },
-        { name: 'Quote', icon: MessageSquare },
+        { name: 'Text', icon: Type }, { name: 'Photo', icon: ImageIcon }, { name: 'Video', icon: Video },
+        { name: 'Audio', icon: Mic }, { name: 'Link', icon: LinkIcon }, { name: 'Quote', icon: MessageSquare },
     ];
 
     const handleFileChange = (e) => {
@@ -212,62 +175,117 @@ const CreatePostModal = ({ isOpen, onClose }) => {
     };
 
     const resetState = () => {
-        setStep(1);
-        setPostType(null);
-        setFile(null);
-        setFilePreview(null);
+        setStep(1); setPostType(null); setFile(null); setFilePreview(null);
+        setContent({ text: '', url: '', quote: '', source: '', tags: '' });
+        setIsUploading(false);
     };
 
-    const handleClose = () => {
-        resetState();
-        onClose();
+    const handleClose = () => { if (!isUploading) { resetState(); onClose(); } };
+
+    const handlePost = async () => {
+        if (!postType || !user) return;
+        setIsUploading(true);
+
+        let finalContent = {};
+        let mediaUrl = '';
+        
+        try {
+            // 1. Upload media if it exists
+            if (file) {
+                const storagePath = `artifacts/${appId}/public/posts/${user.uid}/${Date.now()}_${file.name}`;
+                const storageRef = ref(storage, storagePath);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+
+                mediaUrl = await new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed', 
+                      (snapshot) => {}, // progress
+                      (error) => reject(error),
+                      () => getDownloadURL(uploadTask.snapshot.ref).then(resolve)
+                    );
+                });
+            }
+
+            // 2. Construct content object based on post type
+            switch (postType) {
+                case 'Photo': case 'Video': case 'Audio':
+                    finalContent = { text: content.text, url: mediaUrl };
+                    break;
+                case 'Text':
+                    finalContent = { text: content.text };
+                    break;
+                case 'Link':
+                    finalContent = { text: content.text, url: content.url };
+                    break;
+                case 'Quote':
+                    finalContent = { quote: content.quote, source: content.source };
+                    break;
+                default:
+                    throw new Error("Invalid post type");
+            }
+
+            // 3. Add document to Firestore
+            const firestorePath = `artifacts/${appId}/public/data/posts`;
+            await addDoc(collection(db, firestorePath), {
+                author: {
+                    uid: user.uid,
+                    displayName: user.displayName || 'CyberUser',
+                    photoURL: user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`
+                },
+                type: postType,
+                content: finalContent,
+                tags: content.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                likes: 0,
+                comments: 0,
+                timestamp: serverTimestamp()
+            });
+
+            // 4. Success: Reset and close
+            onPostCreated(); // Callback to switch page to feed
+            handleClose();
+
+        } catch (error) {
+            console.error("Error creating post:", error);
+            setIsUploading(false); // Re-enable button on error
+        }
     };
+    
+    const handleContentChange = (e) => setContent({...content, [e.target.name]: e.target.value });
 
     const renderStepTwo = () => {
         const isMedia = ['Photo', 'Video', 'Audio'].includes(postType);
         return (
             <div className="flex flex-col h-full">
-                <div className="flex-grow">
+                <div className="flex-grow space-y-4">
                      {isMedia && (
-                        <div 
-                            onClick={() => fileInputRef.current.click()}
-                            className="w-full h-48 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-purple-500 hover:text-purple-400 transition-colors cursor-pointer mb-4"
-                        >
+                        <div onClick={() => fileInputRef.current.click()} className="w-full h-48 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-purple-500 hover:text-purple-400 transition-colors cursor-pointer">
                             {filePreview ? (
                                 <>
                                     {postType === 'Photo' && <img src={filePreview} alt="Preview" className="max-h-full rounded-md object-contain" />}
                                     {postType === 'Video' && <video src={filePreview} className="max-h-full rounded-md" controls />}
                                     {postType === 'Audio' && <audio src={filePreview} controls />}
                                 </>
-                            ) : (
-                                <>
-                                    <UploadCloud className="w-12 h-12 mb-2" />
-                                    <span>Click to upload {postType}</span>
-                                </>
-                            )}
+                            ) : ( <> <UploadCloud className="w-12 h-12 mb-2" /> <span>Click to upload {postType}</span> </> )}
                         </div>
                     )}
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={handleFileChange}
-                        className="hidden" 
-                        accept={postType === 'Photo' ? 'image/*' : postType === 'Video' ? 'video/*' : postType === 'Audio' ? 'audio/*' : ''}
-                    />
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept={postType === 'Photo' ? 'image/*' : postType === 'Video' ? 'video/*' : 'audio/*'} />
                     
-                    {postType === 'Text' && <textarea placeholder="What's on your mind?" className="w-full h-40 p-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:ring-purple-500 focus:border-purple-500" />}
-                    {postType === 'Link' && <input type="url" placeholder="https://example.com" className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:ring-purple-500 focus:border-purple-500" />}
+                    {postType === 'Text' && <textarea name="text" value={content.text} onChange={handleContentChange} placeholder="What's on your mind?" className="w-full h-40 p-2 bg-gray-800 border border-gray-700 rounded-md" />}
+                    {postType === 'Link' && <input name="url" value={content.url} onChange={handleContentChange} type="url" placeholder="https://example.com" className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md" />}
                     {postType === 'Quote' && (
                         <>
-                           <textarea placeholder="The quote..." className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md text-white mb-2" />
-                           <input type="text" placeholder="Source" className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md text-white" />
+                           <textarea name="quote" value={content.quote} onChange={handleContentChange} placeholder="The quote..." className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md" />
+                           <input name="source" value={content.source} onChange={handleContentChange} type="text" placeholder="Source" className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md" />
                         </>
                     )}
-                     {(isMedia || postType === 'Link') && <textarea placeholder="Add a caption..." className="w-full mt-4 p-2 bg-gray-800 border border-gray-700 rounded-md text-white" />}
+                     {(isMedia || postType === 'Link' || postType === 'Text') && <textarea name="text" value={content.text} onChange={handleContentChange} placeholder="Add a caption or text..." className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md" />}
+                     <input name="tags" value={content.tags} onChange={handleContentChange} type="text" placeholder="Tags (comma-separated)" className="w-full p-2 bg-gray-800 border border-gray-700 rounded-md" />
                 </div>
                 <div className="flex justify-between items-center mt-6">
-                    <button onClick={() => setStep(1)} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors">Back</button>
-                    <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transition-all">Post</button>
+                    <button onClick={() => setStep(1)} disabled={isUploading} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg disabled:opacity-50">Back</button>
+                    <button onClick={handlePost} disabled={isUploading} className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg disabled:opacity-50 flex items-center">
+                        {isUploading && <Loader2 className="animate-spin w-5 h-5 mr-2" />}
+                        {isUploading ? 'Posting...' : 'Post'}
+                    </button>
                 </div>
             </div>
         );
@@ -276,52 +294,24 @@ const CreatePostModal = ({ isOpen, onClose }) => {
     return (
         <AnimatePresence>
             {isOpen && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                    onClick={handleClose}
-                >
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.3 }}
-                        className="relative w-full max-w-2xl bg-gray-900/80 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button onClick={handleClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
-                        
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={handleClose}>
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-2xl bg-gray-900/80 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={handleClose} disabled={isUploading} className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:bg-gray-700/50"><X className="w-6 h-6" /></button>
                         <AnimatePresence mode="wait">
-                            <motion.div
-                                key={step}
-                                initial={{ opacity: 0, x: 50 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -50 }}
-                                transition={{ duration: 0.3 }}
-                            >
+                            <motion.div key={step} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
                                 {step === 1 ? (
                                     <>
                                         <h2 className="text-2xl font-bold text-white mb-6 text-center">What would you like to post?</h2>
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                             {postTypes.map(type => (
-                                                <motion.button
-                                                    key={type.name}
-                                                    whileHover={{ scale: 1.05 }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                    onClick={() => { setPostType(type.name); setStep(2); }}
-                                                    className="flex flex-col items-center justify-center p-6 bg-gray-800/50 hover:bg-purple-500/20 rounded-lg border border-gray-700 hover:border-purple-500 transition-colors"
-                                                >
+                                                <motion.button key={type.name} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => { setPostType(type.name); setStep(2); }} className="flex flex-col items-center justify-center p-6 bg-gray-800/50 hover:bg-purple-500/20 rounded-lg border border-gray-700 hover:border-purple-500">
                                                     <type.icon className="w-10 h-10 mb-2 text-purple-400" />
                                                     <span className="text-white font-semibold">{type.name}</span>
                                                 </motion.button>
                                             ))}
                                         </div>
                                     </>
-                                ) : (
-                                    renderStepTwo()
-                                )}
+                                ) : ( renderStepTwo() )}
                             </motion.div>
                         </AnimatePresence>
                     </motion.div>
@@ -389,7 +379,6 @@ const MobileSidebar = ({ isOpen, onClose, onPostClick, activePage, setActivePage
     );
 };
 
-
 const LeftSidebar = ({ onPostClick, activePage, setActivePage }) => {
     const navItems = [
         { name: 'Feed', icon: Home, action: () => setActivePage('Feed') },
@@ -418,28 +407,48 @@ const LeftSidebar = ({ onPostClick, activePage, setActivePage }) => {
     );
 };
 
-
-const App = () => {
+const HomePage = () => {
     const [posts, setPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState(null);
     const [activePage, setActivePage] = useState('Feed');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
     useEffect(() => {
-        setIsLoading(true);
-        const unsubscribe = db.collection('posts')
-            .onSnapshot(snapshot => {
-                const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                postsData.sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate());
-                setPosts(postsData);
-                setIsLoading(false);
-            }, error => {
-                console.error("Error fetching posts: ", error);
-                setIsLoading(false);
-            });
+        // Auth listener
+        const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+            if (currentUser) {
+                setUser(currentUser);
+            } else {
+                 try {
+                     if (typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                     } else {
+                        await signInAnonymously(auth);
+                     }
+                } catch (error) {
+                    console.error("Sign-in failed:", error);
+                }
+            }
+        });
 
-        return () => unsubscribe();
+        // Firestore listener
+        const firestorePath = `artifacts/${appId}/public/data/posts`;
+        const q = query(collection(db, firestorePath), orderBy("timestamp", "desc"));
+        const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+            const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setPosts(postsData);
+            setIsLoading(false);
+        }, error => {
+            console.error("Error fetching posts: ", error);
+            setIsLoading(false);
+        });
+
+        return () => {
+            unsubscribeAuth();
+            unsubscribeFirestore();
+        };
     }, []);
 
     return (
@@ -449,47 +458,30 @@ const App = () => {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(120,119,198,0.15),rgba(255,255,255,0))]" />
             </div>
             <div className="relative z-10">
-                <CreatePostModal isOpen={isPostModalOpen} onClose={() => setIsPostModalOpen(false)} />
-                <MobileSidebar 
-                    isOpen={isSidebarOpen}
-                    onClose={() => setIsSidebarOpen(false)}
-                    activePage={activePage}
-                    setActivePage={setActivePage}
-                    onPostClick={() => {
-                        setIsSidebarOpen(false);
-                        setIsPostModalOpen(true);
-                    }}
+                <CreatePostModal 
+                    isOpen={isPostModalOpen} 
+                    onClose={() => setIsPostModalOpen(false)} 
+                    user={user}
+                    onPostCreated={() => setActivePage('Feed')}
                 />
-                <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
+                <MobileSidebar 
+                    isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} activePage={activePage} setActivePage={setActivePage}
+                    onPostClick={() => { setIsSidebarOpen(false); setIsPostModalOpen(true); }}
+                />
+                <Navbar onMenuClick={() => setIsSidebarOpen(true)} user={user} />
 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="flex flex-col lg:flex-row gap-8">
-                        <LeftSidebar 
-                            activePage={activePage}
-                            setActivePage={setActivePage}
-                            onPostClick={() => setIsPostModalOpen(true)}
-                        />
+                        <LeftSidebar activePage={activePage} setActivePage={setActivePage} onPostClick={() => setIsPostModalOpen(true)} />
                         <div className="flex-1 min-w-0">
-                            <motion.section
-                                className="mb-8"
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6 }}
-                            >
-                                <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-                                   {activePage}
-                                </h1>
+                            <motion.section className="mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                                <h1 className="text-3xl sm:text-4xl font-bold mb-2">{activePage}</h1>
                                 <p className="text-gray-400 text-lg">{activePage === 'Feed' ? "What's happening in your network today?" : `Manage your ${activePage.toLowerCase()}.`}</p>
                             </motion.section>
-
                             <div className="space-y-6">
                                 <AnimatePresence>
-                                    {isLoading ? (
-                                        <p>Loading posts...</p>
-                                    ) : (
-                                        posts.map((post) => (
-                                            <PostCard key={post.id} post={post} />
-                                        ))
+                                    {isLoading ? ( <p>Loading feed...</p> ) : (
+                                        posts.map((post) => ( <PostCard key={post.id} post={post} /> ))
                                     )}
                                 </AnimatePresence>
                             </div>
@@ -502,5 +494,4 @@ const App = () => {
     );
 };
 
-export default App;
-
+export default HomePage;
