@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true, // top-level
-  output: 'export',      // top-level
+  output: 'export',
+  reactStrictMode: true,
   images: {
-    unoptimized: true,   // only image-specific configs go here
+    unoptimized: true, // ✅ Required for static export
+
   },
 };
 
-export default nextConfig;
+export default nextConfig;
