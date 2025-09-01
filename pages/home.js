@@ -1,5 +1,6 @@
 'use client';
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -14,6 +15,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 // --- Local Firebase Imports ---
 import { auth, db, storage } from '../lib/firebase';
+
 
 
 // --- Environment App ID ---

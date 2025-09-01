@@ -1,0 +1,95 @@
+[debug] [2025-09-01T07:42:09.864Z] ----------------------------------------------------------------------
+[debug] [2025-09-01T07:42:09.875Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Vishwaradhya.S\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy
+[debug] [2025-09-01T07:42:09.877Z] CLI Version:   14.15.1
+[debug] [2025-09-01T07:42:09.877Z] Platform:      win32
+[debug] [2025-09-01T07:42:09.877Z] Node Version:  v22.13.1
+[debug] [2025-09-01T07:42:09.879Z] Time:          Mon Sep 01 2025 13:12:09 GMT+0530 (India Standard Time)
+[debug] [2025-09-01T07:42:09.880Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-01T07:42:09.888Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-09-01T07:42:11.037Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-01T07:42:11.038Z] > authorizing via signed-in user (vishwaradhya.aihole@gmail.com)
+[debug] [2025-09-01T07:42:11.041Z] [iam] checking project student-registration-app-67741 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-09-01T07:42:11.045Z] Checked if tokens are valid: false, expires at: 1756620324716
+[debug] [2025-09-01T07:42:11.046Z] Checked if tokens are valid: false, expires at: 1756620324716
+[debug] [2025-09-01T07:42:11.049Z] > refreshing access token with scopes: []
+[debug] [2025-09-01T07:42:11.053Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-01T07:42:11.054Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-01T07:42:11.516Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-01T07:42:11.518Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-01T07:42:11.545Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/student-registration-app-67741:testIamPermissions [none]
+[debug] [2025-09-01T07:42:11.545Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/student-registration-app-67741:testIamPermissions x-goog-quota-user=projects/student-registration-app-67741
+[debug] [2025-09-01T07:42:11.546Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/student-registration-app-67741:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-09-01T07:42:11.810Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-09-01T07:42:11.811Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2025-09-01T07:42:13.072Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/student-registration-app-67741:testIamPermissions 200
+[debug] [2025-09-01T07:42:13.072Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/student-registration-app-67741:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-09-01T07:42:13.075Z] Checked if tokens are valid: true, expires at: 1756716130519
+[debug] [2025-09-01T07:42:13.076Z] Checked if tokens are valid: true, expires at: 1756716130519
+[debug] [2025-09-01T07:42:13.077Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/student-registration-app-67741 [none]
+[debug] [2025-09-01T07:42:13.667Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/student-registration-app-67741 200
+[debug] [2025-09-01T07:42:13.668Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/student-registration-app-67741 {"projectId":"student-registration-app-67741","projectNumber":"8156474773","displayName":"student-registration-app","name":"projects/student-registration-app-67741","resources":{"hostingSite":"student-registration-app-67741"},"state":"ACTIVE","etag":"1_b4bb4532-4134-4118-9126-6f696ef99298"}
+[debug] [2025-09-01T07:42:19.429Z] Checked if tokens are valid: true, expires at: 1756716130519
+[debug] [2025-09-01T07:42:19.429Z] Checked if tokens are valid: true, expires at: 1756716130519
+[debug] [2025-09-01T07:42:19.431Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/student-registration-app-67741/sites pageToken=&pageSize=10
+[debug] [2025-09-01T07:42:21.026Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/student-registration-app-67741/sites 200
+[debug] [2025-09-01T07:42:21.027Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/student-registration-app-67741/sites {"sites":[{"name":"projects/student-registration-app-67741/sites/student-registration-app-67741","defaultUrl":"https://student-registration-app-67741.web.app","appId":"1:8156474773:web:edc1739c10cf2f24979a9c","type":"DEFAULT_SITE"},{"name":"projects/student-registration-app-67741/sites/student-registration-app-67741-1c9ce","defaultUrl":"https://student-registration-app-67741-1c9ce.web.app","appId":"1:8156474773:web:279afcabea777f85979a9c","type":"USER_SITE"}]}
+[debug] [2025-09-01T07:42:21.029Z] Checked if tokens are valid: true, expires at: 1756716130519
+[debug] [2025-09-01T07:42:21.029Z] Checked if tokens are valid: true, expires at: 1756716130519
+[debug] [2025-09-01T07:42:21.030Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:8156474773:web:edc1739c10cf2f24979a9c/config [none]
+[debug] [2025-09-01T07:42:22.465Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:8156474773:web:edc1739c10cf2f24979a9c/config 200
+[debug] [2025-09-01T07:42:22.465Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:8156474773:web:edc1739c10cf2f24979a9c/config {"projectId":"student-registration-app-67741","appId":"1:8156474773:web:edc1739c10cf2f24979a9c","storageBucket":"student-registration-app-67741.firebasestorage.app","apiKey":"AIzaSyCObU_cHXxjqUU2pvDB3LCTSGUZd8Q1jWE","authDomain":"student-registration-app-67741.firebaseapp.com","messagingSenderId":"8156474773"}
+[info] 
+   Thank you for trying our early preview of Next.js support on Firebase Hosting.
+   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
+   The integration is known to work with Next.js version 12 - 15.0. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2025-09-01T07:42:34.767Z] Checked if tokens are valid: true, expires at: 1756716130519
+[debug] [2025-09-01T07:42:34.768Z] Checked if tokens are valid: true, expires at: 1756716130519
+[debug] [2025-09-01T07:42:34.768Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/student-registration-app-67741/sites/student-registration-app-67741 [none]
+[debug] [2025-09-01T07:42:36.141Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/student-registration-app-67741/sites/student-registration-app-67741 200
+[debug] [2025-09-01T07:42:36.143Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/student-registration-app-67741/sites/student-registration-app-67741 {"name":"projects/student-registration-app-67741/sites/student-registration-app-67741","defaultUrl":"https://student-registration-app-67741.web.app","appId":"1:8156474773:web:edc1739c10cf2f24979a9c","type":"DEFAULT_SITE"}
+[info]    ▲ Next.js 15.5.2
+
+[info]    - Environments: .env.local
+
+
+[info]    Linting and checking validity of types ...
+
+[info] 
+./components/feathers/PostForm.js
+108:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./components/feathers/TextCard.js
+49:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+
+[info]    Creating an optimized production build ...
+
+[info] Failed to compile.
+
+./components/feathers/TextCard.js
+Module not found: Can't resolve 'react-markdown'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./components/feathers/PostList.js
+./pages/feathers.js
+
+[info] 
+
+[info] 
+
+[info] > Build failed because of webpack errors
+
+[debug] [2025-09-01T07:42:53.269Z] Error: ENOENT: no such file or directory, open 'D:\Engineering\3rd Sem\projects\Clone-Fest-Codex-Frieza\.next\server\middleware-manifest.json'
+[error] 
+[error] Error: An unexpected error has occurred.
