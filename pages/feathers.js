@@ -2,7 +2,6 @@
 import React from "react";
 import PostList from "@/components/feathers/PostList";
 import { motion } from "framer-motion";
-
 export default function FeathersPage() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
