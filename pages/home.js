@@ -1,13 +1,13 @@
 'use client';
 
-
+import Image from 'next/image';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Heart, MessageCircle, Share2, Bookmark, Home, PlusSquare, User, Settings, Menu, X, UploadCloud,
     Type, Image as ImageIcon, Video, Mic, Link as LinkIcon, MessageSquare, Loader2, Send, Twitter, Copy
 } from 'lucide-react';
-
+import Link from 'next/link';
 // --- Firebase SDK Imports ---
 import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
@@ -31,17 +31,19 @@ const Navbar = ({ onMenuClick, user }) => (
                     <button onClick={onMenuClick} className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors lg:hidden">
                         <Menu className="w-6 h-6" />
                     </button>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">CyberFeed</span>
+                    <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Chyrp-Lite</span>
                 </div>
                 <div className="hidden md:flex items-center space-x-4">
-                    <a href="#" className="text-gray-300 hover:text-white transition-colors">Home</a>
-                    <a href="#" className="text-gray-300 hover:text-white transition-colors">About</a>
-                    <a href="#" className="text-gray-300 hover:text-white transition-colors">Docs</a>
-                    <a href="#" className="text-gray-300 hover:text-white transition-colors">Community</a>
+                    <Link href="#" className="text-gray-300 hover:text-white transition-colors">Home</Link>
+                    <Link href="#" className="text-gray-300 hover:text-white transition-colors">About</Link>
+                    <Link href="#" className="text-gray-300 hover:text-white transition-colors">Docs</Link>
+                    <Link href="#" className="text-gray-300 hover:text-white transition-colors">Community</Link>
+
+
                 </div>
                 <div className="flex items-center">
                      {user ? (
-                         <img src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`} alt="User Profile" className="w-8 h-8 rounded-full"/>
+                         <Image src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`} alt="User Profile" className="w-8 h-8 rounded-full"/>
                      ) : (
                         <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse"></div>
                      )}
@@ -55,7 +57,7 @@ const Navbar = ({ onMenuClick, user }) => (
 const Footer = () => (
     <footer className="bg-gray-900/50 border-t border-gray-800/50 mt-12">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-400">
-            <p>&copy; 2025 CyberFeed. All rights reserved.</p>
+            <p>&copy; 2025 Chyrp-Lite. All rights reserved.</p>
         </div>
     </footer>
 );
@@ -96,7 +98,7 @@ const PostCard = ({ post, user }) => {
 
     const handleShare = async () => {
         const shareData = {
-            title: `Check out this post on CyberFeed!`,
+            title: `Check out this post on Chyrp-Lite!`,
             text: `Post by ${post.author.displayName}`,
             url: window.location.href,
         };
@@ -175,7 +177,7 @@ const PostCard = ({ post, user }) => {
                     <>
                         <p className="text-gray-300 mb-4 whitespace-pre-wrap">{post.content.text}</p>
                         <div className="relative h-64 overflow-hidden rounded-lg">
-                            <img src={post.content.url} alt="Post content" className="w-full h-full object-cover"/>
+                            <Image src={post.content.url} alt="Post content" className="w-full h-full object-cover"/>
                         </div>
                     </>
                 );
@@ -202,17 +204,21 @@ const PostCard = ({ post, user }) => {
             case 'Quote':
                 return (
                     <blockquote className="border-l-4 border-purple-500 p-4 bg-gray-800/50 rounded-r-lg">
-                        <p className="text-xl italic text-white">"{post.content.quote}"</p>
+                        <p className="text-xl italic text-white">{post.content.quote}</p>
                         <cite className="block text-right mt-2 text-gray-400">- {post.content.source}</cite>
                     </blockquote>
                 );
             case 'Link':
                 return (
-                     <a href={post.content.url} target="_blank" rel="noopener noreferrer" className="block p-4 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg">
+                     <Link href
+
+={post.content.url} target="_blank" rel="noopener noreferrer" className="block p-4 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg">
                         <p className="text-gray-400 mb-2">Link</p>
                         <p className="text-purple-400 font-bold truncate">{post.content.url}</p>
                         {post.content.text && <p className="text-gray-300 mt-2 whitespace-pre-wrap">{post.content.text}</p>}
-                    </a>
+                    </Link>
+
+
                 );
             default: // Text post
                 return <p className="text-gray-300 whitespace-pre-wrap">{post.content.text}</p>;
@@ -230,7 +236,7 @@ const PostCard = ({ post, user }) => {
         >
             <div className="p-6">
                 <div className="flex items-center mb-4">
-                    <img src={post.author.photoURL} alt={post.author.displayName} className="w-10 h-10 rounded-full border-2 border-purple-500/30"/>
+                    <Image src={post.author.photoURL} alt={post.author.displayName} className="w-10 h-10 rounded-full border-2 border-purple-500/30"/>
                     <div className="ml-3">
                         <p className="text-white font-medium">{post.author.displayName}</p>
                         <p className="text-gray-400 text-sm">{post.timestamp?.toDate().toLocaleString()}</p>
@@ -271,12 +277,16 @@ const PostCard = ({ post, user }) => {
                                 exit={{ opacity: 0, y: 10 }}
                                 className="absolute bottom-full right-0 mb-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-2 z-10"
                             >
-                                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out this post by ${post.author.displayName}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
+                                <Link href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out this post by ${post.author.displayName}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
                                     <Twitter className="w-4 h-4 mr-2" /> Share on Twitter
-                                </a>
-                                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this post by ${post.author.displayName}: ${window.location.href}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
+                                </Link>
+                                <Link href
+
+={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this post by ${post.author.displayName}: ${window.location.href}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
                                     <MessageSquare className="w-4 h-4 mr-2" /> Share on WhatsApp
-                                </a>
+                                </Link>
+
+
                                 <button onClick={copyToClipboard} className="w-full flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
                                     <Copy className="w-4 h-4 mr-2" /> Copy Link
                                 </button>
@@ -300,7 +310,7 @@ const PostCard = ({ post, user }) => {
                     <h4 className="font-bold text-white mb-4">Comments</h4>
                     {user && (
                         <form onSubmit={handlePostComment} className="flex items-start space-x-3 mb-4">
-                            <img src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`} alt="Your avatar" className="w-9 h-9 rounded-full"/>
+                            <Image src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`} alt="Your avatar" className="w-9 h-9 rounded-full"/>
                             <div className="flex-1 relative">
                                 <textarea
                                     value={newComment}
@@ -325,7 +335,7 @@ const PostCard = ({ post, user }) => {
                         ) : comments.length > 0 ? (
                             comments.map(comment => (
                                 <div key={comment.id} className="flex items-start space-x-3">
-                                    <img src={comment.author.photoURL} alt={comment.author.displayName} className="w-9 h-9 rounded-full"/>
+                                    <Image src={comment.author.photoURL} alt={comment.author.displayName} className="w-9 h-9 rounded-full"/>
                                     <div className="flex-1 bg-gray-800 rounded-lg p-3">
                                         <div className="flex items-center justify-between">
                                             <p className="font-semibold text-white text-sm">{comment.author.displayName}</p>
@@ -455,7 +465,7 @@ const CreatePostModal = ({ isOpen, onClose, user, onPostCreated }) => {
                         <div onClick={() => fileInputRef.current.click()} className="w-full h-48 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-purple-500 hover:text-purple-400 transition-colors cursor-pointer">
                             {filePreview ? (
                                 <>
-                                    {postType === 'Photo' && <img src={filePreview} alt="Preview" className="max-h-full rounded-md object-contain" />}
+                                    {postType === 'Photo' && <Image src={filePreview} alt="Preview" className="max-h-full rounded-md object-contain" />}
                                     {postType === 'Video' && <video src={filePreview} className="max-h-full rounded-md" controls />}
                                     {postType === 'Audio' && <audio src={filePreview} controls />}
                                 </>

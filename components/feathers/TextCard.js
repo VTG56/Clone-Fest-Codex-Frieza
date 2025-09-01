@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Trash2, Edit, Heart, MessageCircle } from "lucide-react";
-import ReactMarkdown from "react-markdown";
 import Comments from "./Comments";
+import Image from "next/image";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
@@ -46,7 +46,7 @@ export default function TextCard({ post }) {
               {att.type === "video" ? (
                 <video src={att.url} controls className="w-full h-full object-cover" />
               ) : (
-                <img src={att.url} alt="" className="w-full h-full object-cover" />
+                <Image src={att.url} alt="" className="w-full h-full object-cover" />
               )}
             </div>
           ))}

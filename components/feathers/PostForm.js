@@ -4,7 +4,7 @@ import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { motion } from "framer-motion";
-
+import Image from "next/image";
 export default function PostForm({ onClose, onSaved, editing }) {
   // editing: { id, title, content, attachments } or null
   const [title, setTitle] = useState(editing?.title || "");
@@ -105,7 +105,7 @@ export default function PostForm({ onClose, onSaved, editing }) {
                 {att.type === "video" ? (
                   <video src={att.url} controls className="w-full h-24 object-cover rounded-md" />
                 ) : (
-                  <img src={att.url} alt="" className="w-full h-24 object-cover rounded-md" />
+                  <Image src={att.url} alt="" className="w-full h-24 object-cover rounded-md" />
                 )}
                 <button
                   type="button"
