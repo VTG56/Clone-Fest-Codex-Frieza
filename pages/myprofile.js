@@ -36,11 +36,24 @@ const MyProfile = () => {
       if (!user) return;
       
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
+          // Prioritize Firestore as the source of truth for the display name
+          const firestoreDisplayName = userData.displayName || userData.username || 'ChyrpUser';
+
+          // --- SELF-HEALING LOGIC ---
+          // If the Auth profile's displayName is missing or different, fix it.
+          // This repairs existing accounts affected by the bug in auth.js.
+          if (auth.currentUser && auth.currentUser.displayName !== firestoreDisplayName) {
+            await updateProfile(auth.currentUser, { displayName: firestoreDisplayName });
+            console.log("Auth profile self-healed and updated.");
+          }
+          
           setUserProfile({
-            displayName: user.displayName || userData.username || 'ChyrpUser',
+            displayName: firestoreDisplayName, // Always use the reliable name from Firestore
             bio: userData.bio || '',
             location: userData.location || '',
             website: userData.website || '',

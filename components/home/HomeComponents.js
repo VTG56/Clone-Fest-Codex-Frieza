@@ -176,7 +176,7 @@ export const PostCard = ({ post, user, appId }) => {
           <>
             <p className="text-gray-300 mb-4 whitespace-pre-wrap">{post.content.text}</p>
             <div className="relative h-64 overflow-hidden rounded-lg">
-              <Image src={post.content.url} alt="Post content" className="w-full h-full object-cover" layout="fill"/>
+              <Image src={post.content.url} alt="Post content" className="w-full h-full object-contain" layout="fill"/>
             </div>
           </>
         );
