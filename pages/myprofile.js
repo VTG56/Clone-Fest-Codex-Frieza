@@ -1,260 +1,474 @@
-"use client";
+// pages/myprofile.js
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Edit3, Save, X, Instagram, Facebook, Twitter, Globe, MapPin, Calendar, Mail, User as UserIcon } from 'lucide-react';
 import { useRouter } from 'next/router';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/lib/firebase';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { ArrowLeft, Edit, Save, User as UserIcon } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-const MyProfilePage = () => {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const [profile, setProfile] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ username: '', bio: '', avatar: '' });
-  const [fetchLoading, setFetchLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [saveSuccess, setSaveSuccess] = useState(false);
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
+import { auth, db } from '../lib/firebase';
+import { useAuth } from '../contexts/AuthContext';
 
+const MyProfile = () => {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    displayName: '',
+    bio: '',
+    location: '',
+    website: '',
+    instagram: '',
+    facebook: '',
+    twitter: '',
+    joinDate: ''
+  });
+  const [editForm, setEditForm] = useState({});
+
+  // Load user profile data
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (user) {
-        setFetchLoading(true);
-        try {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            setProfile(data);
-            setFormData({ username: data.username, bio: data.bio, avatar: data.avatar });
-          } else {
-            console.error("No user profile found in Firestore.");
-            setError("Profile not found.");
-          }
-        } catch (err) {
-          console.error("Error fetching profile:", err);
-          setError("Failed to fetch profile data.");
-        } finally {
-          setFetchLoading(false);
+    const loadUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserProfile({
+            displayName: user.displayName || userData.username || 'ChyrpUser',
+            bio: userData.bio || '',
+            location: userData.location || '',
+            website: userData.website || '',
+            instagram: userData.instagram || '',
+            facebook: userData.facebook || '',
+            twitter: userData.twitter || '',
+            joinDate: userData.joinDate || new Date().toISOString()
+          });
         }
-      } else {
-        setFetchLoading(false);
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (!loading) {
-      fetchProfile();
-    }
-  }, [user, loading]);
+    loadUserProfile();
+  }, [user]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleEdit = () => {
+    setEditForm({ ...userProfile });
+    setIsEditing(true);
   };
 
-  const handleSaveProfile = async (e) => {
-    e.preventDefault();
+  const handleCancel = () => {
+    setEditForm({});
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
     setIsSaving(true);
-    setError('');
-    setSaveSuccess(false);
 
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, {
-        username: formData.username,
-        bio: formData.bio,
-        avatar: formData.avatar,
+      // Update Firestore document
+      await updateDoc(doc(db, 'users', user.uid), {
+        username: editForm.displayName,
+        displayName: editForm.displayName,
+        bio: editForm.bio,
+        location: editForm.location,
+        website: editForm.website,
+        instagram: editForm.instagram,
+        facebook: editForm.facebook,
+        twitter: editForm.twitter
       });
 
-      // Update local state to reflect changes
-      setProfile({ ...profile, ...formData });
+      // Update Firebase Auth profile
+      if (auth.currentUser) {
+  await updateProfile(auth.currentUser, {
+    displayName: editForm.displayName
+  });
+}
+
+
+      setUserProfile({ ...editForm });
       setIsEditing(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000); // Hide success message after 3 seconds
-    } catch (err) {
-      console.error("Error updating profile:", err);
-      setError("Failed to save profile. Please try again.");
+    } catch (error) {
+      console.error('Error updating profile:', error);
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (loading || fetchLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-  if (!user || !profile) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-2xl font-bold mb-4">You are not signed in.</p>
-          <button
-            onClick={() => router.push('/login')}
-            className="px-6 py-3 bg-purple-600 rounded-full font-semibold hover:bg-purple-700 transition-colors"
-          >
-            Go to Login
-          </button>
+          <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col">
-      <Navbar />
-      
-      <main className="flex-grow container mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-xl mx-auto"
-        >
-          <motion.button
-            onClick={() => router.push('/home')}
-            className="flex items-center space-x-2 text-purple-400 hover:text-pink-400 transition-colors mb-8"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Home</span>
-          </motion.button>
-          
-          <div className="bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-700">
-            <div className="flex flex-col items-center text-center">
-              <motion.img
-                src={profile.avatar || `https://api.dicebear.com/8.x/bottts/svg?seed=${profile.username}`}
-                alt="Profile Avatar"
-                className="w-24 h-24 rounded-full border-4 border-purple-500 shadow-lg mb-4 object-cover"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              />
-              <h1 className="text-3xl font-bold text-white mb-2">{profile.username}</h1>
-              <p className="text-gray-400 text-sm italic">
-                {profile.bio || "No bio yet."}
-              </p>
-            </div>
+    <div className="min-h-screen bg-gray-900 text-white font-sans">
+      {/* Background Effects */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-pink-900/10 to-blue-900/10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(120,119,198,0.15),rgba(255,255,255,0))]" />
+      </div>
 
-            <div className="mt-8">
-              <div className="flex items-center justify-between mb-2 text-gray-400">
-                <span className="flex items-center">
-                  <UserIcon size={16} className="mr-2" />
-                  User ID:
-                </span>
-                <span className="font-mono text-xs text-pink-400 break-all">{profile.uid}</span>
-              </div>
-              <div className="flex items-center justify-between text-gray-400">
-                <span className="flex items-center">
-                  <Save size={16} className="mr-2" />
-                  Joined:
-                </span>
-                <span className="text-sm">{new Date(profile.joinDate).toLocaleDateString()}</span>
-              </div>
-            </div>
-
-            <div className="flex justify-center mt-8">
-              <motion.button
-                onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-full transition-all duration-300 shadow-lg"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="sticky top-0 z-30 bg-gray-900/50 backdrop-blur-lg border-b border-gray-800/50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <button
+                onClick={() => router.push('/home')}
+                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
               >
-                <Edit size={18} />
-                <span>{isEditing ? 'Cancel Edit' : 'Edit Profile'}</span>
-              </motion.button>
-            </div>
-
-            <AnimatePresence>
-              {isEditing && (
-                <motion.form
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.5 }}
-                  onSubmit={handleSaveProfile}
-                  className="mt-8 overflow-hidden"
+                <ArrowLeft className="w-6 h-6" />
+                <span className="font-medium">Back to Feed</span>
+              </button>
+              
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                My Profile
+              </span>
+              
+              {!isEditing ? (
+                <button
+                  onClick={handleEdit}
+                  className="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
                 >
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="username" className="block text-sm font-medium text-gray-400">Username</label>
-                      <input
-                        type="text"
-                        name="username"
-                        id="username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        required
-                        className="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="bio" className="block text-sm font-medium text-gray-400">Bio</label>
-                      <textarea
-                        name="bio"
-                        id="bio"
-                        value={formData.bio}
-                        onChange={handleInputChange}
-                        rows="3"
-                        className="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="avatar" className="block text-sm font-medium text-gray-400">Avatar URL</label>
-                      <input
-                        type="url"
-                        name="avatar"
-                        id="avatar"
-                        value={formData.avatar}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      />
-                    </div>
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+              ) : (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Cancel</span>
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {isSaving ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden"
+          >
+            {/* Profile Header */}
+            <div className="relative">
+              {/* Cover Background */}
+              <div className="h-48 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 relative overflow-hidden">
+                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-800/50 to-transparent" />
+              </div>
+
+              {/* Profile Picture and Basic Info */}
+              <div className="relative px-6 pb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6 -mt-16">
+                  <div className="relative">
+                    <Image
+                      src={user?.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.uid}`}
+                      alt="Profile"
+                      className="w-32 h-32 rounded-full border-4 border-gray-800 bg-gray-800"
+                      width={128}
+                      height={128}
+                    />
                   </div>
                   
-                  {error && (
-                    <p className="mt-4 text-sm text-red-500 text-center">{error}</p>
-                  )}
-                  {saveSuccess && (
-                    <p className="mt-4 text-sm text-green-400 text-center">Profile saved successfully!</p>
-                  )}
-
-                  <div className="mt-6">
-                    <motion.button
-                      type="submit"
-                      disabled={isSaving}
-                      className="w-full flex justify-center items-center space-x-2 px-4 py-3 bg-purple-600 rounded-full font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {isSaving ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          <Save size={18} />
-                          <span>Save Changes</span>
-                        </>
-                      )}
-                    </motion.button>
+                  <div className="flex-1 min-w-0">
+                    {!isEditing ? (
+                      <>
+                        <h1 className="text-3xl font-bold text-white mb-2">{userProfile.displayName}</h1>
+                        <p className="text-gray-400 mb-4">{user?.email}</p>
+                        {userProfile.bio && (
+                          <p className="text-gray-300 leading-relaxed">{userProfile.bio}</p>
+                        )}
+                      </>
+                    ) : (
+                      <div className="space-y-4 w-full">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
+                          <input
+                            type="text"
+                            name="displayName"
+                            value={editForm.displayName || ''}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            placeholder="Your display name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Bio</label>
+                          <textarea
+                            name="bio"
+                            value={editForm.bio || ''}
+                            onChange={handleInputChange}
+                            rows="3"
+                            className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                            placeholder="Tell us about yourself..."
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      </main>
+                </div>
+              </div>
+            </div>
 
-      <Footer />
+            {/* Profile Details */}
+            <div className="px-6 pb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Personal Information */}
+                <div className="space-y-6">
+                  <h3 className="text-xl font-semibold text-white flex items-center">
+                    <UserIcon className="w-5 h-5 mr-2 text-purple-400" />
+                    Personal Information
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {/* Location */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <MapPin className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-300">Location</span>
+                      </div>
+                      {!isEditing ? (
+                        <span className="text-white">{userProfile.location || 'Not specified'}</span>
+                      ) : (
+                        <input
+                          type="text"
+                          name="location"
+                          value={editForm.location || ''}
+                          onChange={handleInputChange}
+                          className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
+                          placeholder="Your location"
+                        />
+                      )}
+                    </div>
+
+                    {/* Website */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Globe className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-300">Website</span>
+                      </div>
+                      {!isEditing ? (
+                        userProfile.website ? (
+                          <Link href={userProfile.website} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 transition-colors truncate max-w-48">
+                            {userProfile.website}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-500">Not specified</span>
+                        )
+                      ) : (
+                        <input
+                          type="url"
+                          name="website"
+                          value={editForm.website || ''}
+                          onChange={handleInputChange}
+                          className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
+                          placeholder="https://your-website.com"
+                        />
+                      )}
+                    </div>
+
+                    {/* Join Date */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Calendar className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-300">Joined</span>
+                      </div>
+                      <span className="text-white">
+  {userProfile.joinDate
+    ? new Date(userProfile.joinDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : 'Unknown'}
+</span>
+
+                    </div>
+
+                    {/* Email */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Mail className="w-5 h-5 text-gray-400" />
+                        <span className="text-gray-300">Email</span>
+                      </div>
+                      <span className="text-white truncate max-w-48">{user?.email}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Links */}
+                <div className="space-y-6">
+                  <h3 className="text-xl font-semibold text-white flex items-center">
+                    <Globe className="w-5 h-5 mr-2 text-pink-400" />
+                    Social Links
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {/* Instagram */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Instagram className="w-5 h-5 text-pink-500" />
+                        <span className="text-gray-300">Instagram</span>
+                      </div>
+                      {!isEditing ? (
+                        userProfile.instagram ? (
+                          <Link href={`https://instagram.com/${userProfile.instagram}`} target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 transition-colors">
+                            @{userProfile.instagram}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-500">Not connected</span>
+                        )
+                      ) : (
+                        <div className="flex items-center">
+                          <span className="text-gray-400 mr-1">@</span>
+                          <input
+                            type="text"
+                            name="instagram"
+                            value={editForm.instagram || ''}
+                            onChange={handleInputChange}
+                            className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
+                            placeholder="username"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Facebook */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Facebook className="w-5 h-5 text-blue-500" />
+                        <span className="text-gray-300">Facebook</span>
+                      </div>
+                      {!isEditing ? (
+                        userProfile.facebook ? (
+                          <Link href={`https://facebook.com/${userProfile.facebook}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">
+                            {userProfile.facebook}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-500">Not connected</span>
+                        )
+                      ) : (
+                        <input
+                          type="text"
+                          name="facebook"
+                          value={editForm.facebook || ''}
+                          onChange={handleInputChange}
+                          className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
+                          placeholder="username or profile"
+                        />
+                      )}
+                    </div>
+
+                    {/* Twitter */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Twitter className="w-5 h-5 text-blue-400" />
+                        <span className="text-gray-300">Twitter</span>
+                      </div>
+                      {!isEditing ? (
+                        userProfile.twitter ? (
+                          <Link href={`https://twitter.com/${userProfile.twitter}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">
+                            @{userProfile.twitter}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-500">Not connected</span>
+                        )
+                      ) : (
+                        <div className="flex items-center">
+                          <span className="text-gray-400 mr-1">@</span>
+                          <input
+                            type="text"
+                            name="twitter"
+                            value={editForm.twitter || ''}
+                            onChange={handleInputChange}
+                            className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
+                            placeholder="username"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Stats */}
+              <div className="mt-8 pt-6 border-t border-gray-700/50">
+                <div className="grid grid-cols-3 gap-6 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-white">0</div>
+                    <div className="text-sm text-gray-400">Posts</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">0</div>
+                    <div className="text-sm text-gray-400">Followers</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">0</div>
+                    <div className="text-sm text-gray-400">Following</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Recent Activity (Future Feature) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-8 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4">Recent Activity</h3>
+            <div className="text-center py-8">
+              <p className="text-gray-400">Your recent posts and activity will appear here.</p>
+            </div>
+          </motion.div>
+        </main>
+      </div>
     </div>
   );
 };
 
-export default MyProfilePage;
+export default MyProfile;

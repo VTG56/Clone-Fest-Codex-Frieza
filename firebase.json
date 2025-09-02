@@ -1,5 +1,7 @@
 {
   "hosting": {
+    "site": "codex-frieza",
+
     "source": ".",
     "ignore": [
       "firebase.json",
