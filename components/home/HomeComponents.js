@@ -231,13 +231,15 @@ export const PostCard = ({ post, user, appId }) => {
     >
       <div className="p-6">
         <div className="flex items-center mb-4">
-          <Image 
-            src={post.author.photoURL} 
-            alt={post.author.displayName} 
-            className="w-10 h-10 rounded-full border-2 border-purple-500/30" 
-            width={40} 
-            height={40}
-          />
+          <div className="relative w-10 h-10 flex-shrink-0">
+            <Image 
+              src={post.author.photoURL} 
+              alt={post.author.displayName} 
+              className="rounded-full border-2 border-purple-500/30" 
+              layout="fill"
+              objectFit="cover"
+            />
+          </div>
           <div className="ml-3">
             <p className="text-white font-medium">{post.author.displayName}</p>
             <p className="text-gray-400 text-sm">{post.timestamp?.toDate().toLocaleString()}</p>
@@ -333,7 +335,7 @@ export const PostCard = ({ post, user, appId }) => {
             ) : comments.length > 0 ? (
               comments.map(comment => (
                 <div key={comment.id} className="flex items-start space-x-3">
-                  <Image src={comment.author.photoURL} alt={comment.author.displayName} className="w-9 h-9 rounded-full" layout='fill'/>
+                  <Image src={comment.author.photoURL} alt={comment.author.displayName} className="w-9 h-9 rounded-full" width={36} height={36}/>
                   <div className="flex-1 bg-gray-800 rounded-lg p-3">
                     <div className="flex items-center justify-between">
                       <p className="font-semibold text-white text-sm">{comment.author.displayName}</p>
