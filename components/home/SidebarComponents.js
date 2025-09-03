@@ -2,14 +2,17 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, PlusSquare, User, Settings, X } from 'lucide-react';
+import { useRouter } from 'next/router';
 
 // ✅ Updated MobileSidebar
 export const MobileSidebar = ({ isOpen, onClose, onPostClick, activePage, setActivePage, onProfileClick }) => {
+  const router = useRouter();
+
   const navItems = [
     { name: 'Feed', icon: Home, action: () => setActivePage('Feed') },
     { name: 'Post', icon: PlusSquare, action: onPostClick },
     { name: 'Profile', icon: User, action: onProfileClick }, // ✅ Changed from setActivePage
-    { name: 'Settings', icon: Settings, action: () => setActivePage('Settings') },
+    { name: 'Settings', icon: Settings, action: () => router.push('/settings') },
   ];
 
   return (
@@ -64,11 +67,13 @@ export const MobileSidebar = ({ isOpen, onClose, onPostClick, activePage, setAct
 
 // ✅ Updated LeftSidebar
 export const LeftSidebar = ({ onPostClick, activePage, setActivePage, onProfileClick }) => {
+  const router = useRouter();
+
   const navItems = [
     { name: 'Feed', icon: Home, action: () => setActivePage('Feed') },
     { name: 'Post', icon: PlusSquare, action: onPostClick },
     { name: 'Profile', icon: User, action: onProfileClick }, // ✅ Changed
-    { name: 'Settings', icon: Settings, action: () => setActivePage('Settings') },
+    { name: 'Settings', icon: Settings, action: () => router.push('/settings') },
   ];
 
   return (
