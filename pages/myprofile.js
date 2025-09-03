@@ -11,6 +11,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { auth, db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { setDoc } from 'firebase/firestore';
 
 const MyProfile = () => {
   const { user } = useAuth();
@@ -33,14 +34,26 @@ const MyProfile = () => {
   // Load user profile data
   useEffect(() => {
     const loadUserProfile = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
       
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
         if (userDoc.exists()) {
+          // --- Document exists, same logic as before ---
           const userData = userDoc.data();
+          const firestoreDisplayName = userData.displayName || userData.username || 'ChyrpUser';
+          
+          if (auth.currentUser && auth.currentUser.displayName !== firestoreDisplayName) {
+            await updateProfile(auth.currentUser, { displayName: firestoreDisplayName });
+          }
+          
           setUserProfile({
-            displayName: user.displayName || userData.username || 'ChyrpUser',
+            displayName: firestoreDisplayName,
             bio: userData.bio || '',
             location: userData.location || '',
             website: userData.website || '',
@@ -49,9 +62,23 @@ const MyProfile = () => {
             twitter: userData.twitter || '',
             joinDate: userData.joinDate || new Date().toISOString()
           });
+
+        } else {
+          // --- THE FIX: Document DOES NOT exist, so create it ---
+          console.log(`No Firestore doc found for user ${user.uid}, creating one.`);
+          const newProfileData = {
+            displayName: user.displayName || 'ChyrpUser',
+            email: user.email,
+            uid: user.uid,
+            joinDate: new Date().toISOString(),
+            bio: '', location: '', website: '', instagram: '', facebook: '', twitter: ''
+          };
+          
+          await setDoc(userDocRef, newProfileData); // Create the document
+          setUserProfile(newProfileData); // Set the local state
         }
       } catch (error) {
-        console.error('Error loading profile:', error);
+        console.error('Error loading or creating profile document:', error);
       } finally {
         setIsLoading(false);
       }
@@ -75,8 +102,11 @@ const MyProfile = () => {
     setIsSaving(true);
 
     try {
-      // Update Firestore document
-      await updateDoc(doc(db, 'users', user.uid), {
+      // --- THE FIX: Use setDoc with merge: true ---
+      // This will CREATE the document if it doesn't exist, 
+      // or UPDATE it if it does. It's an "upsert" operation.
+      await setDoc(doc(db, 'users', user.uid), {
+        // We include all fields to ensure the document is complete if created
         username: editForm.displayName,
         displayName: editForm.displayName,
         bio: editForm.bio,
@@ -84,21 +114,24 @@ const MyProfile = () => {
         website: editForm.website,
         instagram: editForm.instagram,
         facebook: editForm.facebook,
-        twitter: editForm.twitter
-      });
+        twitter: editForm.twitter,
+        // Also add fields that aren't editable but are needed for new docs
+        email: user.email, 
+        uid: user.uid,
+      }, { merge: true }); // The magic happens here!
 
-      // Update Firebase Auth profile
-      if (auth.currentUser) {
-  await updateProfile(auth.currentUser, {
-    displayName: editForm.displayName
-  });
-}
+      // Update Firebase Auth profile (this part is already correct)
+      if (auth.currentUser && auth.currentUser.displayName !== editForm.displayName) {
+        await updateProfile(auth.currentUser, {
+          displayName: editForm.displayName
+        });
+      }
 
-
-      setUserProfile({ ...editForm });
+      setUserProfile({ ...userProfile, ...editForm });
       setIsEditing(false);
+
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error saving profile:', error);
     } finally {
       setIsSaving(false);
     }

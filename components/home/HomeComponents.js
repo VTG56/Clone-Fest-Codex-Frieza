@@ -176,7 +176,7 @@ export const PostCard = ({ post, user, appId }) => {
           <>
             <p className="text-gray-300 mb-4 whitespace-pre-wrap">{post.content.text}</p>
             <div className="relative h-64 overflow-hidden rounded-lg">
-              <Image src={post.content.url} alt="Post content" className="w-full h-full object-cover" layout="fill"/>
+              <Image src={post.content.url} alt="Post content" className="w-full h-full object-contain" layout="fill"/>
             </div>
           </>
         );
@@ -231,13 +231,15 @@ export const PostCard = ({ post, user, appId }) => {
     >
       <div className="p-6">
         <div className="flex items-center mb-4">
-          <Image 
-            src={post.author.photoURL} 
-            alt={post.author.displayName} 
-            className="w-10 h-10 rounded-full border-2 border-purple-500/30" 
-            width={40} 
-            height={40}
-          />
+          <div className="relative w-10 h-10 flex-shrink-0">
+            <Image 
+              src={post.author.photoURL} 
+              alt={post.author.displayName} 
+              className="rounded-full border-2 border-purple-500/30" 
+              layout="fill"
+              objectFit="cover"
+            />
+          </div>
           <div className="ml-3">
             <p className="text-white font-medium">{post.author.displayName}</p>
             <p className="text-gray-400 text-sm">{post.timestamp?.toDate().toLocaleString()}</p>
@@ -458,9 +460,20 @@ export const CreatePostModal = ({ isOpen, onClose, user, onPostCreated, appId })
             <div onClick={() => fileInputRef.current.click()} className="w-full h-48 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-purple-500 hover:text-purple-400 transition-colors cursor-pointer">
               {filePreview ? (
                 <>
-                  {postType === 'Photo' && <Image src={filePreview} alt="Preview" className="max-h-full rounded-md object-contain" layout="fill" />}
-                  {postType === 'Video' && <video src={filePreview} className="max-h-full rounded-md" controls />}
-                  {postType === 'Audio' && <audio src={filePreview} controls />}
+                  <div className="relative w-full h-full overflow-hidden rounded-md"> 
+                    {postType === 'Photo' && (
+                      <Image 
+                        src={filePreview} 
+                        alt="Preview" 
+                        layout="fill" //  <- Add this
+                        objectFit="contain" // <- Use objectFit with layout="fill"
+                        className="rounded-md" 
+                
+                      />
+                    )}
+                    {postType === 'Video' && <video src={filePreview} className="w-full h-full object-contain rounded-md" controls />}
+                    {postType === 'Audio' && <audio src={filePreview} controls />}
+                  </div>
                 </>
               ) : ( <> <UploadCloud className="w-12 h-12 mb-2" /> <span>Click to upload {postType}</span> </> )}
             </div>
