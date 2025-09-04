@@ -2,16 +2,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Edit3, Save, X, Instagram, Facebook, Twitter, Globe, MapPin, Calendar, Mail, User as UserIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { 
+  ArrowLeft, Edit3, Save, X, Instagram, Facebook, Twitter, 
+  Globe, MapPin, Calendar, Mail, User as UserIcon, Trash2 
+} from 'lucide-react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { 
+  doc, getDoc, setDoc, query, where, orderBy, onSnapshot, deleteDoc 
+} from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
-import { auth, db } from '../lib/firebase';
+import { auth, db, storage } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from '../contexts/AuthContext';
-import { setDoc } from 'firebase/firestore';
+import { postsCollectionRef, postDocRef } from '../lib/firestoreRefs';
+import { PostCard } from '../components/home/HomeComponents';
+
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
 const MyProfile = () => {
   const { user } = useAuth();
@@ -19,6 +28,9 @@ const MyProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [isPostsLoading, setIsPostsLoading] = useState(true);
+
   const [userProfile, setUserProfile] = useState({
     displayName: '',
     bio: '',
@@ -27,7 +39,8 @@ const MyProfile = () => {
     instagram: '',
     facebook: '',
     twitter: '',
-    joinDate: ''
+    joinDate: '',
+    photoURL: ''
   });
   const [editForm, setEditForm] = useState({});
 
@@ -44,7 +57,6 @@ const MyProfile = () => {
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
-          // --- Document exists, same logic as before ---
           const userData = userDoc.data();
           const firestoreDisplayName = userData.displayName || userData.username || 'ChyrpUser';
           
@@ -60,22 +72,22 @@ const MyProfile = () => {
             instagram: userData.instagram || '',
             facebook: userData.facebook || '',
             twitter: userData.twitter || '',
-            joinDate: userData.joinDate || new Date().toISOString()
+            joinDate: userData.joinDate || new Date().toISOString(),
+            photoURL: userData.photoURL || user?.photoURL || ''
           });
 
         } else {
-          // --- THE FIX: Document DOES NOT exist, so create it ---
-          console.log(`No Firestore doc found for user ${user.uid}, creating one.`);
           const newProfileData = {
             displayName: user.displayName || 'ChyrpUser',
             email: user.email,
             uid: user.uid,
             joinDate: new Date().toISOString(),
-            bio: '', location: '', website: '', instagram: '', facebook: '', twitter: ''
+            bio: '', location: '', website: '', instagram: '', facebook: '', twitter: '',
+            photoURL: user?.photoURL || ''
           };
           
-          await setDoc(userDocRef, newProfileData); // Create the document
-          setUserProfile(newProfileData); // Set the local state
+          await setDoc(userDocRef, newProfileData); 
+          setUserProfile(newProfileData);
         }
       } catch (error) {
         console.error('Error loading or creating profile document:', error);
@@ -86,6 +98,55 @@ const MyProfile = () => {
 
     loadUserProfile();
   }, [user]);
+
+  // Load user posts
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      postsCollectionRef(appId),
+      where("author.uid", "==", user.uid),
+      orderBy("timestamp", "desc")
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPosts(postsData);
+      setIsPostsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleDelete = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      await deleteDoc(postDocRef(appId, postId));
+      console.log("Deleted post:", postId);
+    } catch (err) {
+      console.error("Error deleting post:", err);
+    }
+  };
+
+  const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !user) return;
+
+    try {
+      const fileRef = ref(storage, `avatars/${user.uid}/${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      const photoURL = await getDownloadURL(fileRef);
+
+      // Save in Firestore
+      await setDoc(doc(db, "users", user.uid), { photoURL }, { merge: true });
+
+      // Save in Auth
+      await updateProfile(auth.currentUser, { photoURL });
+
+      // Update state
+      setUserProfile(prev => ({ ...prev, photoURL }));
+      console.log("Profile picture updated:", photoURL);
+    } catch (err) {
+      console.error("Error uploading profile pic:", err);
+    }
+  };
 
   const handleEdit = () => {
     setEditForm({ ...userProfile });
@@ -102,11 +163,7 @@ const MyProfile = () => {
     setIsSaving(true);
 
     try {
-      // --- THE FIX: Use setDoc with merge: true ---
-      // This will CREATE the document if it doesn't exist, 
-      // or UPDATE it if it does. It's an "upsert" operation.
       await setDoc(doc(db, 'users', user.uid), {
-        // We include all fields to ensure the document is complete if created
         username: editForm.displayName,
         displayName: editForm.displayName,
         bio: editForm.bio,
@@ -115,12 +172,10 @@ const MyProfile = () => {
         instagram: editForm.instagram,
         facebook: editForm.facebook,
         twitter: editForm.twitter,
-        // Also add fields that aren't editable but are needed for new docs
         email: user.email, 
         uid: user.uid,
-      }, { merge: true }); // The magic happens here!
+      }, { merge: true });
 
-      // Update Firebase Auth profile (this part is already correct)
       if (auth.currentUser && auth.currentUser.displayName !== editForm.displayName) {
         await updateProfile(auth.currentUser, {
           displayName: editForm.displayName
@@ -226,23 +281,38 @@ const MyProfile = () => {
           >
             {/* Profile Header */}
             <div className="relative">
-              {/* Cover Background */}
               <div className="h-48 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 relative overflow-hidden">
                 <div className="absolute inset-0 bg-black/20" />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-800/50 to-transparent" />
               </div>
 
-              {/* Profile Picture and Basic Info */}
               <div className="relative px-6 pb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6 -mt-16">
-                  <div className="relative">
+                  <div className="relative group">
                     <Image
-                      src={user?.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.uid}`}
+                      src={userProfile.photoURL || user?.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.uid}`}
                       alt="Profile"
-                      className="w-32 h-32 rounded-full border-4 border-gray-800 bg-gray-800"
+                      className="w-32 h-32 rounded-full border-4 border-gray-800 bg-gray-800 object-cover"
                       width={128}
                       height={128}
                     />
+                    {isEditing && (
+                      <>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="profilePicInput"
+                          className="hidden"
+                          onChange={handleProfilePicUpload}
+                        />
+                        <label
+                          htmlFor="profilePicInput"
+                          className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-sm rounded-full opacity-0 group-hover:opacity-100 cursor-pointer"
+                        >
+                          Change
+                        </label>
+                      </>
+                    )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
@@ -285,218 +355,53 @@ const MyProfile = () => {
               </div>
             </div>
 
-            {/* Profile Details */}
+            {/* Profile Stats */}
             <div className="px-6 pb-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Personal Information */}
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-white flex items-center">
-                    <UserIcon className="w-5 h-5 mr-2 text-purple-400" />
-                    Personal Information
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    {/* Location */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <MapPin className="w-5 h-5 text-gray-400" />
-                        <span className="text-gray-300">Location</span>
-                      </div>
-                      {!isEditing ? (
-                        <span className="text-white">{userProfile.location || 'Not specified'}</span>
-                      ) : (
-                        <input
-                          type="text"
-                          name="location"
-                          value={editForm.location || ''}
-                          onChange={handleInputChange}
-                          className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
-                          placeholder="Your location"
-                        />
-                      )}
-                    </div>
-
-                    {/* Website */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Globe className="w-5 h-5 text-gray-400" />
-                        <span className="text-gray-300">Website</span>
-                      </div>
-                      {!isEditing ? (
-                        userProfile.website ? (
-                          <Link href={userProfile.website} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 transition-colors truncate max-w-48">
-                            {userProfile.website}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-500">Not specified</span>
-                        )
-                      ) : (
-                        <input
-                          type="url"
-                          name="website"
-                          value={editForm.website || ''}
-                          onChange={handleInputChange}
-                          className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
-                          placeholder="https://your-website.com"
-                        />
-                      )}
-                    </div>
-
-                    {/* Join Date */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Calendar className="w-5 h-5 text-gray-400" />
-                        <span className="text-gray-300">Joined</span>
-                      </div>
-                      <span className="text-white">
-  {userProfile.joinDate
-    ? new Date(userProfile.joinDate).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    : 'Unknown'}
-</span>
-
-                    </div>
-
-                    {/* Email */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Mail className="w-5 h-5 text-gray-400" />
-                        <span className="text-gray-300">Email</span>
-                      </div>
-                      <span className="text-white truncate max-w-48">{user?.email}</span>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-3 gap-6 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-white">{posts.length}</div>
+                  <div className="text-sm text-gray-400">Posts</div>
                 </div>
-
-                {/* Social Links */}
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-white flex items-center">
-                    <Globe className="w-5 h-5 mr-2 text-pink-400" />
-                    Social Links
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    {/* Instagram */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Instagram className="w-5 h-5 text-pink-500" />
-                        <span className="text-gray-300">Instagram</span>
-                      </div>
-                      {!isEditing ? (
-                        userProfile.instagram ? (
-                          <Link href={`https://instagram.com/${userProfile.instagram}`} target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 transition-colors">
-                            @{userProfile.instagram}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-500">Not connected</span>
-                        )
-                      ) : (
-                        <div className="flex items-center">
-                          <span className="text-gray-400 mr-1">@</span>
-                          <input
-                            type="text"
-                            name="instagram"
-                            value={editForm.instagram || ''}
-                            onChange={handleInputChange}
-                            className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
-                            placeholder="username"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Facebook */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Facebook className="w-5 h-5 text-blue-500" />
-                        <span className="text-gray-300">Facebook</span>
-                      </div>
-                      {!isEditing ? (
-                        userProfile.facebook ? (
-                          <Link href={`https://facebook.com/${userProfile.facebook}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">
-                            {userProfile.facebook}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-500">Not connected</span>
-                        )
-                      ) : (
-                        <input
-                          type="text"
-                          name="facebook"
-                          value={editForm.facebook || ''}
-                          onChange={handleInputChange}
-                          className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
-                          placeholder="username or profile"
-                        />
-                      )}
-                    </div>
-
-                    {/* Twitter */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Twitter className="w-5 h-5 text-blue-400" />
-                        <span className="text-gray-300">Twitter</span>
-                      </div>
-                      {!isEditing ? (
-                        userProfile.twitter ? (
-                          <Link href={`https://twitter.com/${userProfile.twitter}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">
-                            @{userProfile.twitter}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-500">Not connected</span>
-                        )
-                      ) : (
-                        <div className="flex items-center">
-                          <span className="text-gray-400 mr-1">@</span>
-                          <input
-                            type="text"
-                            name="twitter"
-                            value={editForm.twitter || ''}
-                            onChange={handleInputChange}
-                            className="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:ring-1 focus:ring-purple-500"
-                            placeholder="username"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">0</div>
+                  <div className="text-sm text-gray-400">Followers</div>
                 </div>
-              </div>
-
-              {/* Profile Stats */}
-              <div className="mt-8 pt-6 border-t border-gray-700/50">
-                <div className="grid grid-cols-3 gap-6 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-white">0</div>
-                    <div className="text-sm text-gray-400">Posts</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">0</div>
-                    <div className="text-sm text-gray-400">Followers</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white">0</div>
-                    <div className="text-sm text-gray-400">Following</div>
-                  </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">0</div>
+                  <div className="text-sm text-gray-400">Following</div>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Recent Activity (Future Feature) */}
+          {/* User's Posts */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6 }}
             className="mt-8 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6"
           >
-            <h3 className="text-xl font-semibold text-white mb-4">Recent Activity</h3>
-            <div className="text-center py-8">
-              <p className="text-gray-400">Your recent posts and activity will appear here.</p>
-            </div>
+            <h3 className="text-xl font-semibold text-white mb-4">My Posts</h3>
+            {isPostsLoading ? (
+              <p className="text-gray-400">Loading posts...</p>
+            ) : posts.length === 0 ? (
+              <p className="text-gray-500">No posts yet.</p>
+            ) : (
+              <div className="space-y-6">
+                {posts.map((post) => (
+                  <div key={post.id} className="relative">
+                    <PostCard post={post} user={user} appId={appId} />
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm flex items-center space-x-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         </main>
       </div>

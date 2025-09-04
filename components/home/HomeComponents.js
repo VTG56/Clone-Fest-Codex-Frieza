@@ -241,7 +241,10 @@ export const PostCard = ({ post, user, appId }) => {
             />
           </div>
           <div className="ml-3">
-            <p className="text-white font-medium">{post.author.displayName}</p>
+            <Link href={`/user/${post.author.uid}`} className="text-white font-medium hover:text-purple-400">
+              {post.author.displayName}
+            </Link>
+
             <p className="text-gray-400 text-sm">{post.timestamp?.toDate().toLocaleString()}</p>
           </div>
         </div>
