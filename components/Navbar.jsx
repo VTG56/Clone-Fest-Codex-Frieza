@@ -123,7 +123,7 @@ const Navbar = () => {
                 // Logged in state
                 <>
                   <motion.button
-                    onClick={() => router.push('/profile')}
+                    onClick={() => router.push('/myprofile')}
                     className="group relative px-6 py-3 text-gray-300 hover:text-white font-medium border border-gray-600/50 hover:border-purple-500/50 rounded-xl transition-all duration-300 overflow-hidden"
                     variants={linkVariants}
                     whileHover="hover"
@@ -269,7 +269,7 @@ const Navbar = () => {
                       <>
                         <motion.button
                           onClick={() => {
-                            router.push('/profile');
+                            router.push('/myprofile');
                             setIsOpen(false);
                           }}
                           className="group flex items-center gap-3 text-gray-300 hover:text-white px-4 py-3 rounded-xl border border-gray-600/50 hover:border-purple-500/50 hover:bg-gray-700/50 transition-all duration-300"

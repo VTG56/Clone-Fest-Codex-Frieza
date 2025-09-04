@@ -9,9 +9,9 @@ import {
     Type, Image as ImageIcon, Video, Mic, Link as LinkIcon, MessageSquare, Loader2, Send, Twitter, Copy
 } from 'lucide-react';
 import Link from 'next/link';
-import { serverTimestamp, query, orderBy, onSnapshot, updateDoc, arrayUnion, arrayRemove, increment, addDoc } from 'firebase/firestore';
+import { serverTimestamp, query, orderBy, onSnapshot, updateDoc, arrayUnion, arrayRemove, increment, addDoc, doc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../lib/firebase';
+import { storage, db } from '../../lib/firebase';
 import { postMediaPath } from '../../lib/firestorePaths';
 import { postsCollectionRef, postDocRef, postCommentsCollectionRef } from '../../lib/firestoreRefs';
 
@@ -73,10 +73,33 @@ export const PostCard = ({ post, user, appId }) => {
   const [newComment, setNewComment] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [authorData, setAuthorData] = useState(post.author);
   const shareRef = useRef(null);
 
   const hasLiked = useMemo(() => Array.isArray(post.likes) && post.likes.includes(user?.uid), [post.likes, user?.uid]);
   const postRef = postDocRef(appId, post.id);
+
+  // Listen to author's latest profile data
+  useEffect(() => {
+    if (!post.author.uid) return;
+    
+    const userDocRef = doc(db, 'users', post.author.uid);
+    const unsubscribe = onSnapshot(userDocRef, (snap) => {
+      if (snap.exists()) {
+        const userData = snap.data();
+        setAuthorData({
+          uid: post.author.uid,
+          displayName: userData.displayName || post.author.displayName || 'ChyrpUser',
+          photoURL: userData.photoURL || post.author.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author.uid}`
+        });
+      }
+    }, (error) => {
+      console.error('Error listening to user data:', error);
+      // Keep original author data on error
+    });
+
+    return () => unsubscribe();
+  }, [post.author.uid, post.author.displayName, post.author.photoURL]);
 
   // Close share options if clicked outside
   useEffect(() => {
@@ -101,7 +124,7 @@ export const PostCard = ({ post, user, appId }) => {
   const handleShare = async () => {
     const shareData = {
       title: `Check out this post on Chyrp-Lite!`,
-      text: `Post by ${post.author.displayName}`,
+      text: `Post by ${authorData.displayName}`,
       url: window.location.href,
     };
 
@@ -233,16 +256,16 @@ export const PostCard = ({ post, user, appId }) => {
         <div className="flex items-center mb-4">
           <div className="relative w-10 h-10 flex-shrink-0">
             <Image 
-              src={post.author.photoURL} 
-              alt={post.author.displayName} 
+              src={authorData.photoURL} 
+              alt={authorData.displayName} 
               className="rounded-full border-2 border-purple-500/30" 
               layout="fill"
               objectFit="cover"
             />
           </div>
           <div className="ml-3">
-            <Link href={`/user/${post.author.uid}`} className="text-white font-medium hover:text-purple-400">
-              {post.author.displayName}
+            <Link href={`/user/${authorData.uid}`} className="text-white font-medium hover:text-purple-400">
+              {authorData.displayName}
             </Link>
 
             <p className="text-gray-400 text-sm">{post.timestamp?.toDate().toLocaleString()}</p>
@@ -284,10 +307,10 @@ export const PostCard = ({ post, user, appId }) => {
                 exit={{ opacity: 0, y: 10 }}
                 className="absolute bottom-full right-0 mb-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-2 z-10"
               >
-                <Link href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out this post by ${post.author.displayName}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
+                <Link href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out this post by ${authorData.displayName}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
                   <Twitter className="w-4 h-4 mr-2" /> Share on Twitter
                 </Link>
-                <Link href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this post by ${post.author.displayName}: ${window.location.href}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
+                <Link href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this post by ${authorData.displayName}: ${window.location.href}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
                   <MessageSquare className="w-4 h-4 mr-2" /> Share on WhatsApp
                 </Link>
                 <button onClick={copyToClipboard} className="w-full flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md">
@@ -468,15 +491,14 @@ export const CreatePostModal = ({ isOpen, onClose, user, onPostCreated, appId })
                       <Image 
                         src={filePreview} 
                         alt="Preview" 
-                        layout="fill" //  <- Add this
-                        objectFit="contain" // <- Use objectFit with layout="fill"
+                        layout="fill"
+                        objectFit="contain"
                         className="rounded-md" 
-                
                       />
                     )}
                     {postType === 'Video' && <video src={filePreview} className="w-full h-full object-contain rounded-md" controls />}
                     {postType === 'Audio' && <audio src={filePreview} controls />}
-                  </div>
+                  </div>
                 </>
               ) : ( <> <UploadCloud className="w-12 h-12 mb-2" /> <span>Click to upload {postType}</span> </> )}
             </div>
