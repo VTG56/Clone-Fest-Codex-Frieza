@@ -1,4 +1,4 @@
-// pages/home.js - FIXED: Modularized and cleaned up main home page
+// pages/home.js - UPDATED: Added search functionality integration
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7,12 +7,12 @@ import { useRouter } from 'next/router';
 import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 import { query, orderBy, onSnapshot } from 'firebase/firestore';
 
-// FIXED: Import centralized auth functions
+// Import centralized auth functions
 import { auth } from '../lib/firebase';
 import { logOut } from '../lib/auth';
 import { postsCollectionRef } from '../lib/firestoreRefs';
 
-// FIXED: Import modular components
+// Import modular components with updated SearchBar
 import { Navbar, Footer, PostCard, CreatePostModal } from '../components/home/HomeComponents';
 import { MobileSidebar, LeftSidebar } from '../components/home/SidebarComponents';
 
@@ -26,14 +26,14 @@ const HomePage = () => {
   const [activePage, setActivePage] = useState('Feed');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-  const router = useRouter(); // ✅ Already present
+  const router = useRouter();
 
-  // ✅ Profile click handler added
+  // Profile click handler
   const handleProfileClick = () => {
     router.push('/myprofile');
   };
 
-  // ✅ Enhanced authentication handling
+  // Enhanced authentication handling
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -72,7 +72,7 @@ const HomePage = () => {
     };
   }, [router]);
 
-  // ✅ Logout handler with redirect
+  // Logout handler with redirect
   const handleLogout = async () => {
     try {
       await logOut();
@@ -82,7 +82,7 @@ const HomePage = () => {
     }
   };
 
-  // ✅ Loading state
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white font-sans flex items-center justify-center">
@@ -118,9 +118,10 @@ const HomePage = () => {
           activePage={activePage} 
           setActivePage={setActivePage}
           onPostClick={() => { setIsSidebarOpen(false); setIsPostModalOpen(true); }}
-          onProfileClick={handleProfileClick} // ✅ Added
+          onProfileClick={handleProfileClick}
         />
         
+        {/* Updated Navbar with integrated search */}
         <Navbar 
           onMenuClick={() => setIsSidebarOpen(true)} 
           user={user} 
@@ -133,7 +134,7 @@ const HomePage = () => {
               activePage={activePage} 
               setActivePage={setActivePage} 
               onPostClick={() => setIsPostModalOpen(true)}
-              onProfileClick={handleProfileClick} // ✅ Added
+              onProfileClick={handleProfileClick}
             />
             
             <div className="flex-1 min-w-0">
