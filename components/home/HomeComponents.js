@@ -211,7 +211,7 @@ export const SearchBar = () => {
           animate={{ opacity: 1, y: 0 }}
           className="absolute top-full left-0 right-0 mt-2 bg-gray-800/95 backdrop-blur-xl border border-gray-700/50 rounded-lg shadow-xl z-50 p-4 text-center"
         >
-          <p className="text-gray-400">No users found matching "{searchTerm}"</p>
+          <p className="text-gray-400">No users found matching {searchTerm}</p>
         </motion.div>
       )}
     </div>
