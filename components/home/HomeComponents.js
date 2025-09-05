@@ -1,4 +1,4 @@
-// components/home/HomeComponents.js - FIXED: Modularized home page components
+// components/home/HomeComponents.js - UPDATED with Search functionality
 'use client';
 
 import Image from 'next/image';
@@ -6,16 +6,219 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Heart, MessageCircle, Share2, Bookmark, Home, PlusSquare, User, Settings, Menu, X, UploadCloud,
-    Type, Image as ImageIcon, Video, Mic, Link as LinkIcon, MessageSquare, Loader2, Send, Twitter, Copy
+    Type, Image as ImageIcon, Video, Mic, Link as LinkIcon, MessageSquare, Loader2, Send, Twitter, Copy,
+    Search, UserCircle
 } from 'lucide-react';
 import Link from 'next/link';
-import { serverTimestamp, query, orderBy, onSnapshot, updateDoc, arrayUnion, arrayRemove, increment, addDoc, doc } from 'firebase/firestore';
+import { useRouter } from 'next/router';
+import { serverTimestamp, query, orderBy, onSnapshot, updateDoc, arrayUnion, arrayRemove, increment, addDoc, doc, collection, getDocs, where } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, db } from '../../lib/firebase';
 import { postMediaPath } from '../../lib/firestorePaths';
 import { postsCollectionRef, postDocRef, postCommentsCollectionRef } from '../../lib/firestoreRefs';
 
-// FIXED: Modular Navbar Component
+// NEW: Search Bar Component
+export const SearchBar = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef(null);
+  const router = useRouter();
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Search users with fuzzy matching
+  const searchUsers = async (term) => {
+    if (!term.trim()) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const usersRef = collection(db, 'users');
+      const snapshot = await getDocs(usersRef);
+      
+      const users = [];
+      snapshot.forEach((doc) => {
+        const userData = doc.data();
+        users.push({
+          uid: doc.id,
+          displayName: userData.displayName || 'ChyrpUser',
+          email: userData.email || '',
+          photoURL: userData.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${doc.id}`
+        });
+      });
+
+      // Fuzzy search implementation
+      const searchLower = term.toLowerCase();
+      const filtered = users.filter(user => {
+        const nameLower = user.displayName.toLowerCase();
+        const emailLower = user.email.toLowerCase();
+        
+        // Check if search term is contained in name or email
+        return nameLower.includes(searchLower) || 
+               emailLower.includes(searchLower) ||
+               // Additional fuzzy matching - check if all characters of search exist in order
+               fuzzyMatch(nameLower, searchLower) ||
+               fuzzyMatch(emailLower, searchLower);
+      });
+
+      // Sort by relevance - exact matches first, then partial matches
+      filtered.sort((a, b) => {
+        const aNameLower = a.displayName.toLowerCase();
+        const bNameLower = b.displayName.toLowerCase();
+        const aEmailLower = a.email.toLowerCase();
+        const bEmailLower = b.email.toLowerCase();
+        
+        // Exact name matches first
+        if (aNameLower === searchLower && bNameLower !== searchLower) return -1;
+        if (bNameLower === searchLower && aNameLower !== searchLower) return 1;
+        
+        // Starts with name matches
+        if (aNameLower.startsWith(searchLower) && !bNameLower.startsWith(searchLower)) return -1;
+        if (bNameLower.startsWith(searchLower) && !aNameLower.startsWith(searchLower)) return 1;
+        
+        // Contains in name
+        if (aNameLower.includes(searchLower) && !bNameLower.includes(searchLower)) return -1;
+        if (bNameLower.includes(searchLower) && !aNameLower.includes(searchLower)) return 1;
+        
+        return 0;
+      });
+
+      setSearchResults(filtered.slice(0, 8)); // Limit to 8 results
+      setShowResults(true);
+    } catch (error) {
+      console.error('Error searching users:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Simple fuzzy matching function
+  const fuzzyMatch = (text, pattern) => {
+    let patternIndex = 0;
+    for (let i = 0; i < text.length && patternIndex < pattern.length; i++) {
+      if (text[i] === pattern[patternIndex]) {
+        patternIndex++;
+      }
+    }
+    return patternIndex === pattern.length;
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchUsers(searchTerm);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const handleUserClick = (uid) => {
+    router.push(`/user/${uid}`);
+    setShowResults(false);
+    setSearchTerm('');
+  };
+
+  const highlightMatch = (text, searchTerm) => {
+    if (!searchTerm) return text;
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <span key={index} className="bg-purple-500/30 text-purple-300 font-semibold">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
+  return (
+    <div className="relative w-full max-w-md" ref={searchRef}>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Search users..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onFocus={() => searchTerm && setShowResults(true)}
+          className="w-full pl-10 pr-4 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+        />
+        {isSearching && (
+          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-purple-400 animate-spin" />
+        )}
+      </div>
+
+      {/* Search Results Dropdown */}
+      <AnimatePresence>
+        {showResults && searchResults.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute top-full left-0 right-0 mt-2 bg-gray-800/95 backdrop-blur-xl border border-gray-700/50 rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto"
+          >
+            {searchResults.map((user) => (
+              <button
+                key={user.uid}
+                onClick={() => handleUserClick(user.uid)}
+                className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-700/50 transition-colors first:rounded-t-lg last:rounded-b-lg"
+              >
+                <div className="relative w-10 h-10 flex-shrink-0">
+                  <Image
+                    src={user.photoURL}
+                    alt={user.displayName}
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-full border border-gray-600"
+                  />
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-white font-medium truncate">
+                    {highlightMatch(user.displayName, searchTerm)}
+                  </p>
+                  {user.email && (
+                    <p className="text-gray-400 text-sm truncate">
+                      {highlightMatch(user.email, searchTerm)}
+                    </p>
+                  )}
+                </div>
+                <UserCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* No Results */}
+      {showResults && searchTerm && !isSearching && searchResults.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-full left-0 right-0 mt-2 bg-gray-800/95 backdrop-blur-xl border border-gray-700/50 rounded-lg shadow-xl z-50 p-4 text-center"
+        >
+          <p className="text-gray-400">No users found matching {searchTerm}</p>
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
+// UPDATED: Modular Navbar Component with Search Bar
 export const Navbar = ({ onMenuClick, user, onLogout }) => (
   <nav className="sticky top-0 z-30 bg-gray-900/50 backdrop-blur-lg border-b border-gray-800/50">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -26,13 +229,13 @@ export const Navbar = ({ onMenuClick, user, onLogout }) => (
           </button>
           <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Chyrp-Lite</span>
         </div>
-        <div className="hidden md:flex items-center space-x-4">
-          <Link href="#" className="text-gray-300 hover:text-white transition-colors">Home</Link>
-          <Link href="#" className="text-gray-300 hover:text-white transition-colors">About</Link>
-          <Link href="#" className="text-gray-300 hover:text-white transition-colors">Docs</Link>
-          <Link href="#" className="text-gray-300 hover:text-white transition-colors">Community</Link>
+        
+        {/* Search Bar - Center */}
+        <div className="hidden sm:block flex-1 max-w-md mx-8">
+          <SearchBar />
         </div>
-        <div className="flex items-center">
+        
+        <div className="flex items-center space-x-4">
           {user ? (
             <Image 
               src={user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`} 
@@ -46,11 +249,16 @@ export const Navbar = ({ onMenuClick, user, onLogout }) => (
           )}
           <button 
             onClick={onLogout}
-            className="ml-4 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
           >
             Logout
           </button>
         </div>
+      </div>
+      
+      {/* Mobile Search Bar */}
+      <div className="sm:hidden pb-4">
+        <SearchBar />
       </div>
     </div>
   </nav>
@@ -65,7 +273,7 @@ export const Footer = () => (
   </footer>
 );
 
-// FIXED: Modular PostCard Component
+// FIXED: Modular PostCard Component (unchanged from your original)
 export const PostCard = ({ post, user, appId }) => {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
@@ -382,7 +590,7 @@ export const PostCard = ({ post, user, appId }) => {
   );
 };
 
-// FIXED: Modular CreatePostModal Component
+// FIXED: Modular CreatePostModal Component (unchanged from your original)
 export const CreatePostModal = ({ isOpen, onClose, user, onPostCreated, appId }) => {
   const [step, setStep] = useState(1);
   const [postType, setPostType] = useState(null);
