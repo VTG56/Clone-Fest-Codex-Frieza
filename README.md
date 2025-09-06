@@ -1,7 +1,7 @@
 # 🚀 𝐂𝐡𝐲𝐫𝐩 𝐋𝐢𝐭𝐞 𝐑𝐞𝐯𝐚𝐦𝐩 – Next.js + Firebase
 Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverless, and performant app powered by Next.js and Firebase.
 
-✨ 𝐅𝐞𝐚𝐭𝐮𝐫𝐞𝐬
+## ✨ 𝐅𝐞𝐚𝐭𝐮𝐫𝐞𝐬
 
 →🔑 Authentication – Firebase Auth (Email/Password, Social logins planned)
 
@@ -19,7 +19,7 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 
 →🔒 Spam Prevention – CAPTCHA (replacing legacy MAPTCHA)
 
-🛠️ 𝐓𝐞𝐜𝐡 𝐒𝐭𝐚𝐜𝐤
+## 🛠️ 𝐓𝐞𝐜𝐡 𝐒𝐭𝐚𝐜𝐤
 
 → F͟r͟o͟n͟t͟e͟n͟d͟: Next.js
  (React + SSR + SSG)<br>
@@ -29,7 +29,7 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 → E͟d͟i͟t͟o͟r͟: Markdown / Rich Text (TipTap planned)<br>
 → D͟e͟p͟l͟o͟y͟m͟e͟n͟t͟: Firebase Hosting<br>
 
-📂𝐂𝐨𝐧𝐭𝐞𝐧𝐭 𝐓𝐲𝐩𝐞𝐬 ("𝐅𝐞𝐚𝐭𝐡𝐞𝐫𝐬")
+## 📂𝐂𝐨𝐧𝐭𝐞𝐧𝐭 𝐓𝐲𝐩𝐞𝐬 ("𝐅𝐞𝐚𝐭𝐡𝐞𝐫𝐬")
 
 ● Text → Blog posts / Articles<br>
 ● Photo → Image with captions<br>
@@ -39,7 +39,7 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 ● Audio → Upload/Embed audio<br>
 ● Uploader → Multiple files in a gallery<br>
 
-📦 𝐄𝐱𝐭𝐞𝐧𝐬𝐢𝐨𝐧𝐬 (𝐌𝐨𝐝𝐮𝐥𝐞𝐬)
+## 📦 𝐄𝐱𝐭𝐞𝐧𝐬𝐢𝐨𝐧𝐬 (𝐌𝐨𝐝𝐮𝐥𝐞𝐬)
 
 → ⚡ Cacher → ISR + CDN caching
 
@@ -61,7 +61,7 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 
 → 🎨 Syntax Highlighting → Code block styling
 
-🚀 𝐆𝐞𝐭𝐭𝐢𝐧𝐠 𝐒𝐭𝐚𝐫𝐭𝐞𝐝
+## 🚀 𝐆𝐞𝐭𝐭𝐢𝐧𝐠 𝐒𝐭𝐚𝐫𝐭𝐞𝐝
 1. Clone the repo
 git clone https://github.com/VTG56/student-registration-app-67741.git
 cd student-registration-app-67741
