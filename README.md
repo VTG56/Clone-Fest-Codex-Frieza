@@ -1,78 +1,67 @@
 :
 
 🚀 Chyrp Lite Revamp – Next.js + Firebase
-
-Re-engineering the legacy Chyrp Lite PHP blogging platform into a modern, serverless, and scalable app powered by Next.js and Firebase.
+Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverless, and performant app powered by Next.js and Firebase.
 
 ✨ Features
 
-🔑 Authentication – Firebase Auth (Email/Password + Social Logins planned)
+→🔑 Authentication – Firebase Auth (Email/Password, Social logins planned)
 
-📝 Rich Content Types (Text, Photo, Quote, Link, Video, Audio, Multi-file Uploader)
+→📝 Rich Content Types – Text, Photo, Quote, Link, Video, Audio, Multi-file uploader
 
-🎨 Themes – Switchable, component-based theming
+→🎨 Themes – Switchable, component-driven theming system
 
-👥 User Roles & Permissions (Visitor, User, Editor, Admin)
+→👥 User Roles & Permissions – Visitor, User, Editor, Admin
 
-💬 Interactive Features – Comments, Likes, Tags, Categories
+→💬 Interactive Features – Comments, Likes, Tags, Categories
 
-📈 SEO & Performance – SSR/SSG, Incremental Static Regeneration, Firebase CDN
+→📈 SEO & Performance – SSR/SSG, ISR, Firebase CDN
 
-🔌 Modular System – Enable/disable extensions like Infinite Scroll, Lightbox, Read More, Syntax Highlighting, etc.
+→🔌 Modular Extensions – Toggle features like Infinite Scroll, Lightbox, Read More, Syntax Highlighting
 
-🔒 Spam Prevention – Modern CAPTCHA integration (replacing old MAPTCHA)
+→🔒 Spam Prevention – CAPTCHA (replacing legacy MAPTCHA)
 
 🛠️ Tech Stack
 
-Frontend: Next.js
+→ F͟r͟o͟n͟t͟e͟n͟d͟: Next.js
  (React + SSR + SSG)
-
-Backend: Firebase
+→ ͟Ba͟c͟k͟e͟n͟d͟: Firebase
  (Firestore, Auth, Storage, Functions, Hosting)
-
-Styling: TailwindCSS + Component-based themes
-
-Editor: Markdown / Rich Text (TipTap planned)
-
-Deployment: Firebase Hosting
+→ S͟t͟y͟l͟i͟n͟g͟: TailwindCSS + Component-based themes
+→ E͟d͟i͟t͟o͟r͟: Markdown / Rich Text (TipTap planned)
+→ D͟e͟p͟l͟o͟y͟m͟e͟n͟t͟: Firebase Hosting
 
 📂 Content Types ("Feathers")
 
-Text → Blog posts / Articles
-
-Photo → Image with captions
-
-Quote → Highlight quotations
-
-Link → Share external links
-
-Video → Upload/Embed videos
-
-Audio → Upload/Embed audio
-
-Uploader → Multiple files in a gallery
+● Text → Blog posts / Articles
+● Photo → Image with captions
+● Quote → Highlight quotations
+● Link → Share external links
+● Video → Upload/Embed videos
+● Audio → Upload/Embed audio
+● Uploader → Multiple files in a gallery
 
 📦 Extensions (Modules)
 
-⚡ Cacher → ISR + CDN caching
+→ ⚡ Cacher → ISR + CDN caching
 
-🏷️ Tags & Categories → Organize posts
+→ 🏷️ Tags & Categories → Organize posts
 
-💬 Comments → Firestore-based, with moderation
+→ 💬 Comments → Firestore-based, with moderation
 
-❤️ Likes → Per post
+→ ❤️ Likes → Per post
 
-📊 Post Views → Analytics counter
+→ 📊 Post Views → Analytics counter
 
-📚 Read More → Excerpts for long posts
+→ 📚 Read More → Excerpts for long posts
 
-💡 Lightbox → Modern image viewer
+→ 💡 Lightbox → Modern image viewer
 
-🗺️ Sitemap → Auto-generated for SEO
+→ 🗺️ Sitemap → Auto-generated for SEO
 
-🧮 MathJax → Render LaTeX equations
+→ 🧮 MathJax → Render LaTeX equations
 
-🎨 Syntax Highlighting → Code block styling
+→ 🎨 Syntax Highlighting → Code block styling
 
 🚀 Getting Started
 1. Clone the repo
@@ -120,7 +109,7 @@ Admin → Full site control
 
 📖 Documentation
 
-Full PRD available in docs/PRD.md
+Full PRD available in [PRD Documentation](docs/PRD.md)
 
 🏆 Hackathon Purpose
 
