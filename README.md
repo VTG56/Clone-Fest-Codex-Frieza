@@ -63,8 +63,8 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 
 ## 🚀 𝐆𝐞𝐭𝐭𝐢𝐧𝐠 𝐒𝐭𝐚𝐫𝐭𝐞𝐝
 1. Clone the repo
-git clone https://github.com/VTG56/student-registration-app-67741.git
-cd student-registration-app-67741
+git clone https://github.com/VTG56/clone-fest-codex-frieza.git
+cd clone-fest-codex-frieza
 
 2. Install dependencies
 npm install
