@@ -75,7 +75,7 @@ npm run dev
 
 App will be available at http://localhost:3000
 
-🌩️𝐅𝐢𝐫𝐞𝐛𝐚𝐬𝐞 𝐒𝐞𝐭𝐮𝐩
+## 🌩️𝐅𝐢𝐫𝐞𝐛𝐚𝐬𝐞 𝐒𝐞𝐭𝐮𝐩
 
 Create a Firebase project
 
@@ -105,10 +105,10 @@ Editor → Create & manage own posts<br>
 
 Admin → Full site control<br>
 
-📖 𝐃𝐨𝐜𝐮𝐦𝐞𝐧𝐭𝐚𝐭𝐢𝐨𝐧
+## 📖 𝐃𝐨𝐜𝐮𝐦𝐞𝐧𝐭𝐚𝐭𝐢𝐨𝐧
 
 Full PRD available in [PRD Documentation](docs/PRD.md)
 
-🏆 𝐇𝐚𝐜𝐤𝐚𝐭𝐡𝐨𝐧 𝐏𝐮𝐫𝐩𝐨𝐬𝐞
+## 🏆 𝐇𝐚𝐜𝐤𝐚𝐭𝐡𝐨𝐧 𝐏𝐮𝐫𝐩𝐨𝐬𝐞
 
 This project is built for Clone Fest – Codex Frieza, with the goal of modernizing a classic blogging engine while showing off Next.js + Firebase scalability.
