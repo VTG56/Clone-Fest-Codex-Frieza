@@ -112,3 +112,8 @@ Full PRD available in [PRD Documentation](docs/PRD.md)
 ## 🏆 𝐇𝐚𝐜𝐤𝐚𝐭𝐡𝐨𝐧 𝐏𝐮𝐫𝐩𝐨𝐬𝐞
 
 This project is built for Clone Fest – Codex Frieza, with the goal of modernizing a classic blogging engine while showing off Next.js + Firebase scalability.
+
+## 🎥 Demo Links
+- Live App: [codex-frieza.web.app](https://codex-frieza.web.app)
+- Backup Video (no audio): [Google Drive](https://drive.google.com/file/d/1dGIEEXAOy8_waS3DnmpPNey52qUDmvRh/view?usp=drive_link)
+
