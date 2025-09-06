@@ -60,8 +60,7 @@ const SettingsPage = () => {
     { id: 'profile', name: 'Profile', icon: User },
     { id: 'security', name: 'Security', icon: Lock },
     { id: 'notifications', name: 'Notifications', icon: Bell },
-    { id: 'privacy', name: 'Privacy', icon: Shield },
-    { id: 'appearance', name: 'Appearance', icon: Palette }
+    { id: 'privacy', name: 'Privacy', icon: Shield }
   ];
 
   // Authentication and data loading
@@ -498,62 +497,13 @@ const SettingsPage = () => {
     </div>
   );
 
-  const renderAppearanceTab = () => (
-    <div className="space-y-6">
-      <div className="bg-gray-800/50 p-6 rounded-lg border border-gray-700/50">
-        <h3 className="text-lg font-semibold mb-4 flex items-center">
-          <Palette className="w-5 h-5 mr-2 text-purple-400" />
-          Appearance & Language
-        </h3>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Theme</label>
-            <select
-              value={preferences.theme}
-              onChange={(e) => setPreferences(prev => ({ ...prev, theme: e.target.value }))}
-              className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-              <option value="auto">Auto</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Language</label>
-            <select
-              value={preferences.language}
-              onChange={(e) => setPreferences(prev => ({ ...prev, language: e.target.value }))}
-              className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value="en">English</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
-              <option value="de">German</option>
-            </select>
-          </div>
-        </div>
-
-        <button
-          onClick={handleSavePreferences}
-          disabled={saving}
-          className="mt-6 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 flex items-center"
-        >
-          {saving ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />}
-          {saving ? 'Saving...' : 'Save Settings'}
-        </button>
-      </div>
-    </div>
-  );
-
+  
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile': return renderProfileTab();
       case 'security': return renderSecurityTab();
       case 'notifications': return renderNotificationsTab();
       case 'privacy': return renderPrivacyTab();
-      case 'appearance': return renderAppearanceTab();
       default: return renderProfileTab();
     }
   };

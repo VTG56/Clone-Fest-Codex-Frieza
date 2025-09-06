@@ -6,8 +6,9 @@ import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { doc, getDoc, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { doc, getDoc, collection, query, where, orderBy, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '../../lib/firebase';
 import { postsCollectionRef } from '../../lib/firestoreRefs';
 import { PostCard } from '../../components/home/HomeComponents';
 
@@ -16,9 +17,14 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const UserProfilePage = () => {
   const router = useRouter();
   const { uid } = router.query;
+  const [user] = useAuthState(auth);
   const [userProfile, setUserProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   // Load user profile
   useEffect(() => {
@@ -27,7 +33,15 @@ const UserProfilePage = () => {
       try {
         const userDoc = await getDoc(doc(db, 'users', uid));
         if (userDoc.exists()) {
-          setUserProfile(userDoc.data());
+          const userData = userDoc.data();
+          setUserProfile(userData);
+          setFollowersCount(userData.followers?.length || 0);
+          setFollowingCount(userData.following?.length || 0);
+          
+          // Check if current user is following this profile
+          if (user && userData.followers) {
+            setIsFollowing(userData.followers.includes(user.uid));
+          }
         } else {
           setUserProfile(null);
         }
@@ -36,7 +50,7 @@ const UserProfilePage = () => {
       }
     };
     fetchUser();
-  }, [uid]);
+  }, [uid, user]);
 
   // Load user's posts
   useEffect(() => {
@@ -53,6 +67,43 @@ const UserProfilePage = () => {
     });
     return () => unsubscribe();
   }, [uid]);
+
+  // Handle follow/unfollow
+  const handleFollowToggle = async () => {
+    if (!user || !uid || user.uid === uid) return;
+    
+    setIsFollowLoading(true);
+    try {
+      const profileUserRef = doc(db, 'users', uid);
+      const currentUserRef = doc(db, 'users', user.uid);
+
+      if (isFollowing) {
+        // Unfollow
+        await updateDoc(profileUserRef, {
+          followers: arrayRemove(user.uid)
+        });
+        await updateDoc(currentUserRef, {
+          following: arrayRemove(uid)
+        });
+        setIsFollowing(false);
+        setFollowersCount(prev => prev - 1);
+      } else {
+        // Follow
+        await updateDoc(profileUserRef, {
+          followers: arrayUnion(user.uid)
+        });
+        await updateDoc(currentUserRef, {
+          following: arrayUnion(uid)
+        });
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   if (!userProfile) {
     return (
@@ -108,9 +159,34 @@ const UserProfilePage = () => {
             width={128}
             height={128}
           />
-          <div className="mt-4 sm:mt-0">
+          <div className="mt-4 sm:mt-0 flex-1">
             <h1 className="text-3xl font-bold text-white">{userProfile.displayName}</h1>
-            <p className="text-gray-400">{userProfile.bio || "No bio yet"}</p>
+            <p className="text-gray-400 mb-2">{userProfile.bio || "No bio yet"}</p>
+            
+            {/* Follower/Following counts */}
+            <div className="flex space-x-6 mb-4">
+              <span className="text-gray-300">
+                <span className="font-semibold text-white">{followersCount}</span> followers
+              </span>
+              <span className="text-gray-300">
+                <span className="font-semibold text-white">{followingCount}</span> following
+              </span>
+            </div>
+
+            {/* Follow/Unfollow button - only show if not viewing own profile and user is logged in */}
+            {user && user.uid !== uid && (
+              <button
+                onClick={handleFollowToggle}
+                disabled={isFollowLoading}
+                className={`px-6 py-2 rounded-full font-semibold transition-all duration-200 ${
+                  isFollowing
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600'
+                    : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg'
+                } ${isFollowLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isFollowLoading ? 'Loading...' : isFollowing ? 'Unfollow' : 'Follow'}
+              </button>
+            )}
           </div>
         </div>
 

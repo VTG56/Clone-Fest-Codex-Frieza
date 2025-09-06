@@ -30,6 +30,8 @@ const MyProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [posts, setPosts] = useState([]);
   const [isPostsLoading, setIsPostsLoading] = useState(true);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   const [userProfile, setUserProfile] = useState({
     displayName: '',
@@ -76,6 +78,10 @@ const MyProfile = () => {
             photoURL: userData.photoURL || user?.photoURL || ''
           });
 
+          // Set follow counts
+          setFollowersCount(userData.followers?.length || 0);
+          setFollowingCount(userData.following?.length || 0);
+
         } else {
           const newProfileData = {
             displayName: user.displayName || 'ChyrpUser',
@@ -83,11 +89,15 @@ const MyProfile = () => {
             uid: user.uid,
             joinDate: new Date().toISOString(),
             bio: '', location: '', website: '', instagram: '', facebook: '', twitter: '',
-            photoURL: user?.photoURL || ''
+            photoURL: user?.photoURL || '',
+            followers: [],
+            following: []
           };
           
           await setDoc(userDocRef, newProfileData); 
           setUserProfile(newProfileData);
+          setFollowersCount(0);
+          setFollowingCount(0);
         }
       } catch (error) {
         console.error('Error loading or creating profile document:', error);
@@ -97,6 +107,22 @@ const MyProfile = () => {
     };
 
     loadUserProfile();
+  }, [user]);
+
+  // Real-time listener for follow counts
+  useEffect(() => {
+    if (!user) return;
+
+    const userDocRef = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+      if (doc.exists()) {
+        const userData = doc.data();
+        setFollowersCount(userData.followers?.length || 0);
+        setFollowingCount(userData.following?.length || 0);
+      }
+    });
+
+    return () => unsubscribe();
   }, [user]);
 
   // Load user posts
@@ -363,11 +389,11 @@ const MyProfile = () => {
                   <div className="text-sm text-gray-400">Posts</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-white">0</div>
+                  <div className="text-2xl font-bold text-white">{followersCount}</div>
                   <div className="text-sm text-gray-400">Followers</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-white">0</div>
+                  <div className="text-2xl font-bold text-white">{followingCount}</div>
                   <div className="text-sm text-gray-400">Following</div>
                 </div>
               </div>
