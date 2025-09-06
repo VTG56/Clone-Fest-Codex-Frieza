@@ -1,6 +1,4 @@
-:
-
-🚀 𝐂𝐡𝐲𝐫𝐩 𝐋𝐢𝐭𝐞 𝐑𝐞𝐯𝐚𝐦𝐩 – Next.js + Firebase
+#🚀 𝐂𝐡𝐲𝐫𝐩 𝐋𝐢𝐭𝐞 𝐑𝐞𝐯𝐚𝐦𝐩 – Next.js + Firebase
 Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverless, and performant app powered by Next.js and Firebase.
 
 ✨ 𝐅𝐞𝐚𝐭𝐮𝐫𝐞𝐬
