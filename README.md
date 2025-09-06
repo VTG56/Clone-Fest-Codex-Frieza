@@ -24,22 +24,22 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 🛠️ Tech Stack
 
 → F͟r͟o͟n͟t͟e͟n͟d͟: Next.js
- (React + SSR + SSG)
+ (React + SSR + SSG)<br>
 → ͟Ba͟c͟k͟e͟n͟d͟: Firebase
- (Firestore, Auth, Storage, Functions, Hosting)
-→ S͟t͟y͟l͟i͟n͟g͟: TailwindCSS + Component-based themes
-→ E͟d͟i͟t͟o͟r͟: Markdown / Rich Text (TipTap planned)
-→ D͟e͟p͟l͟o͟y͟m͟e͟n͟t͟: Firebase Hosting
+ (Firestore, Auth, Storage, Functions, Hosting)<br>
+→ S͟t͟y͟l͟i͟n͟g͟: TailwindCSS + Component-based themes<br>
+→ E͟d͟i͟t͟o͟r͟: Markdown / Rich Text (TipTap planned)<br>
+→ D͟e͟p͟l͟o͟y͟m͟e͟n͟t͟: Firebase Hosting<br>
 
 📂 Content Types ("Feathers")
 
-● Text → Blog posts / Articles
-● Photo → Image with captions
-● Quote → Highlight quotations
-● Link → Share external links
-● Video → Upload/Embed videos
-● Audio → Upload/Embed audio
-● Uploader → Multiple files in a gallery
+● Text → Blog posts / Articles<br>
+● Photo → Image with captions<br>
+● Quote → Highlight quotations<br>
+● Link → Share external links<br>
+● Video → Upload/Embed videos<br>
+● Audio → Upload/Embed audio<br>
+● Uploader → Multiple files in a gallery<br>
 
 📦 Extensions (Modules)
 
