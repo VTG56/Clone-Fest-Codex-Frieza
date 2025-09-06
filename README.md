@@ -1,9 +1,9 @@
 :
 
-🚀 Chyrp Lite Revamp – Next.js + Firebase
+🚀 𝐂𝐡𝐲𝐫𝐩 𝐋𝐢𝐭𝐞 𝐑𝐞𝐯𝐚𝐦𝐩 – Next.js + Firebase
 Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverless, and performant app powered by Next.js and Firebase.
 
-✨ Features
+✨ 𝐅𝐞𝐚𝐭𝐮𝐫𝐞𝐬
 
 →🔑 Authentication – Firebase Auth (Email/Password, Social logins planned)
 
@@ -21,7 +21,7 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 
 →🔒 Spam Prevention – CAPTCHA (replacing legacy MAPTCHA)
 
-🛠️ Tech Stack
+🛠️ 𝐓𝐞𝐜𝐡 𝐒𝐭𝐚𝐜𝐤
 
 → F͟r͟o͟n͟t͟e͟n͟d͟: Next.js
  (React + SSR + SSG)<br>
@@ -31,7 +31,7 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 → E͟d͟i͟t͟o͟r͟: Markdown / Rich Text (TipTap planned)<br>
 → D͟e͟p͟l͟o͟y͟m͟e͟n͟t͟: Firebase Hosting<br>
 
-📂 Content Types ("Feathers")
+📂𝐂𝐨𝐧𝐭𝐞𝐧𝐭 𝐓𝐲𝐩𝐞𝐬 ("𝐅𝐞𝐚𝐭𝐡𝐞𝐫𝐬")
 
 ● Text → Blog posts / Articles<br>
 ● Photo → Image with captions<br>
@@ -41,7 +41,7 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 ● Audio → Upload/Embed audio<br>
 ● Uploader → Multiple files in a gallery<br>
 
-📦 Extensions (Modules)
+📦 𝐄𝐱𝐭𝐞𝐧𝐬𝐢𝐨𝐧𝐬 (𝐌𝐨𝐝𝐮𝐥𝐞𝐬)
 
 → ⚡ Cacher → ISR + CDN caching
 
@@ -63,7 +63,7 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 
 → 🎨 Syntax Highlighting → Code block styling
 
-🚀 Getting Started
+🚀 𝐆𝐞𝐭𝐭𝐢𝐧𝐠 𝐒𝐭𝐚𝐫𝐭𝐞𝐝
 1. Clone the repo
 git clone https://github.com/VTG56/student-registration-app-67741.git
 cd student-registration-app-67741
@@ -77,7 +77,7 @@ npm run dev
 
 App will be available at http://localhost:3000
 
-🌩️ Firebase Setup
+🌩️𝐅𝐢𝐫𝐞𝐛𝐚𝐬𝐞 𝐒𝐞𝐭𝐮𝐩
 
 Create a Firebase project
 
@@ -97,20 +97,20 @@ Deploy with:
 
 firebase deploy
 
-👥 User Roles
+👥 𝐔𝐬𝐞𝐫 𝐑𝐨𝐥𝐞𝐬
 
-Visitor → View, like, comment
+Visitor → View, like, comment<br>
 
-User → Basic registered privileges
+User → Basic registered privileges<br>
 
-Editor → Create & manage own posts
+Editor → Create & manage own posts<br>
 
-Admin → Full site control
+Admin → Full site control<br>
 
-📖 Documentation
+📖 𝐃𝐨𝐜𝐮𝐦𝐞𝐧𝐭𝐚𝐭𝐢𝐨𝐧
 
 Full PRD available in [PRD Documentation](docs/PRD.md)
 
-🏆 Hackathon Purpose
+🏆 𝐇𝐚𝐜𝐤𝐚𝐭𝐡𝐨𝐧 𝐏𝐮𝐫𝐩𝐨𝐬𝐞
 
 This project is built for Clone Fest – Codex Frieza, with the goal of modernizing a classic blogging engine while showing off Next.js + Firebase scalability.
