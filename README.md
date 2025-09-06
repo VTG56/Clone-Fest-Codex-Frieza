@@ -64,13 +64,13 @@ Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverl
 ## 🚀 𝐆𝐞𝐭𝐭𝐢𝐧𝐠 𝐒𝐭𝐚𝐫𝐭𝐞𝐝
 1. Clone the repo
 git clone https://github.com/VTG56/clone-fest-codex-frieza.git
-cd clone-fest-codex-frieza
+- cd clone-fest-codex-frieza
 
 2. Install dependencies
-npm install
+- npm install
 
 3. Run locally
-npm run dev
+- npm run dev
 
 
 App will be available at http://localhost:3000
@@ -83,17 +83,17 @@ Enable Authentication, Firestore, Storage, Hosting
 
 Add your Firebase config inside .env.local
 
-NEXT_PUBLIC_FIREBASE_API_KEY=xxxx
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxxx
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxxx
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxxx
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxxx
-NEXT_PUBLIC_FIREBASE_APP_ID=xxxx
+- NEXT_PUBLIC_FIREBASE_API_KEY=xxxx
+- NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxxx
+- NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxxx
+- NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxxx
+- NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxxx
+- NEXT_PUBLIC_FIREBASE_APP_ID=xxxx
 
 
 Deploy with:
 
-firebase deploy
+- firebase deploy
 
 👥 𝐔𝐬𝐞𝐫 𝐑𝐨𝐥𝐞𝐬
 
