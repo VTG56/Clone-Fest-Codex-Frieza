@@ -1,80 +1,69 @@
 :
 
-🚀 Chyrp Lite Revamp – Next.js + Firebase
+🚀 𝐂𝐡𝐲𝐫𝐩 𝐋𝐢𝐭𝐞 𝐑𝐞𝐯𝐚𝐦𝐩 – Next.js + Firebase
+Modernizing the legacy Chyrp Lite PHP blogging platform into a scalable, serverless, and performant app powered by Next.js and Firebase.
 
-Re-engineering the legacy Chyrp Lite PHP blogging platform into a modern, serverless, and scalable app powered by Next.js and Firebase.
+✨ 𝐅𝐞𝐚𝐭𝐮𝐫𝐞𝐬
 
-✨ Features
+→🔑 Authentication – Firebase Auth (Email/Password, Social logins planned)
 
-🔑 Authentication – Firebase Auth (Email/Password + Social Logins planned)
+→📝 Rich Content Types – Text, Photo, Quote, Link, Video, Audio, Multi-file uploader
 
-📝 Rich Content Types (Text, Photo, Quote, Link, Video, Audio, Multi-file Uploader)
+→🎨 Themes – Switchable, component-driven theming system
 
-🎨 Themes – Switchable, component-based theming
+→👥 User Roles & Permissions – Visitor, User, Editor, Admin
 
-👥 User Roles & Permissions (Visitor, User, Editor, Admin)
+→💬 Interactive Features – Comments, Likes, Tags, Categories
 
-💬 Interactive Features – Comments, Likes, Tags, Categories
+→📈 SEO & Performance – SSR/SSG, ISR, Firebase CDN
 
-📈 SEO & Performance – SSR/SSG, Incremental Static Regeneration, Firebase CDN
+→🔌 Modular Extensions – Toggle features like Infinite Scroll, Lightbox, Read More, Syntax Highlighting
 
-🔌 Modular System – Enable/disable extensions like Infinite Scroll, Lightbox, Read More, Syntax Highlighting, etc.
+→🔒 Spam Prevention – CAPTCHA (replacing legacy MAPTCHA)
 
-🔒 Spam Prevention – Modern CAPTCHA integration (replacing old MAPTCHA)
+🛠️ 𝐓𝐞𝐜𝐡 𝐒𝐭𝐚𝐜𝐤
 
-🛠️ Tech Stack
+→ F͟r͟o͟n͟t͟e͟n͟d͟: Next.js
+ (React + SSR + SSG)<br>
+→ ͟Ba͟c͟k͟e͟n͟d͟: Firebase
+ (Firestore, Auth, Storage, Functions, Hosting)<br>
+→ S͟t͟y͟l͟i͟n͟g͟: TailwindCSS + Component-based themes<br>
+→ E͟d͟i͟t͟o͟r͟: Markdown / Rich Text (TipTap planned)<br>
+→ D͟e͟p͟l͟o͟y͟m͟e͟n͟t͟: Firebase Hosting<br>
 
-Frontend: Next.js
- (React + SSR + SSG)
+📂𝐂𝐨𝐧𝐭𝐞𝐧𝐭 𝐓𝐲𝐩𝐞𝐬 ("𝐅𝐞𝐚𝐭𝐡𝐞𝐫𝐬")
 
-Backend: Firebase
- (Firestore, Auth, Storage, Functions, Hosting)
+● Text → Blog posts / Articles<br>
+● Photo → Image with captions<br>
+● Quote → Highlight quotations<br>
+● Link → Share external links<br>
+● Video → Upload/Embed videos<br>
+● Audio → Upload/Embed audio<br>
+● Uploader → Multiple files in a gallery<br>
 
-Styling: TailwindCSS + Component-based themes
+📦 𝐄𝐱𝐭𝐞𝐧𝐬𝐢𝐨𝐧𝐬 (𝐌𝐨𝐝𝐮𝐥𝐞𝐬)
 
-Editor: Markdown / Rich Text (TipTap planned)
+→ ⚡ Cacher → ISR + CDN caching
 
-Deployment: Firebase Hosting
+→ 🏷️ Tags & Categories → Organize posts
 
-📂 Content Types ("Feathers")
+→ 💬 Comments → Firestore-based, with moderation
 
-Text → Blog posts / Articles
+→ ❤️ Likes → Per post
 
-Photo → Image with captions
+→ 📊 Post Views → Analytics counter
 
-Quote → Highlight quotations
+→ 📚 Read More → Excerpts for long posts
 
-Link → Share external links
+→ 💡 Lightbox → Modern image viewer
 
-Video → Upload/Embed videos
+→ 🗺️ Sitemap → Auto-generated for SEO
 
-Audio → Upload/Embed audio
+→ 🧮 MathJax → Render LaTeX equations
 
-Uploader → Multiple files in a gallery
+→ 🎨 Syntax Highlighting → Code block styling
 
-📦 Extensions (Modules)
-
-⚡ Cacher → ISR + CDN caching
-
-🏷️ Tags & Categories → Organize posts
-
-💬 Comments → Firestore-based, with moderation
-
-❤️ Likes → Per post
-
-📊 Post Views → Analytics counter
-
-📚 Read More → Excerpts for long posts
-
-💡 Lightbox → Modern image viewer
-
-🗺️ Sitemap → Auto-generated for SEO
-
-🧮 MathJax → Render LaTeX equations
-
-🎨 Syntax Highlighting → Code block styling
-
-🚀 Getting Started
+🚀 𝐆𝐞𝐭𝐭𝐢𝐧𝐠 𝐒𝐭𝐚𝐫𝐭𝐞𝐝
 1. Clone the repo
 git clone https://github.com/VTG56/student-registration-app-67741.git
 cd student-registration-app-67741
@@ -88,7 +77,7 @@ npm run dev
 
 App will be available at http://localhost:3000
 
-🌩️ Firebase Setup
+🌩️𝐅𝐢𝐫𝐞𝐛𝐚𝐬𝐞 𝐒𝐞𝐭𝐮𝐩
 
 Create a Firebase project
 
@@ -108,20 +97,20 @@ Deploy with:
 
 firebase deploy
 
-👥 User Roles
+👥 𝐔𝐬𝐞𝐫 𝐑𝐨𝐥𝐞𝐬
 
-Visitor → View, like, comment
+Visitor → View, like, comment<br>
 
-User → Basic registered privileges
+User → Basic registered privileges<br>
 
-Editor → Create & manage own posts
+Editor → Create & manage own posts<br>
 
-Admin → Full site control
+Admin → Full site control<br>
 
-📖 Documentation
+📖 𝐃𝐨𝐜𝐮𝐦𝐞𝐧𝐭𝐚𝐭𝐢𝐨𝐧
 
-Full PRD available in docs/PRD.md
+Full PRD available in [PRD Documentation](docs/PRD.md)
 
-🏆 Hackathon Purpose
+🏆 𝐇𝐚𝐜𝐤𝐚𝐭𝐡𝐨𝐧 𝐏𝐮𝐫𝐩𝐨𝐬𝐞
 
 This project is built for Clone Fest – Codex Frieza, with the goal of modernizing a classic blogging engine while showing off Next.js + Firebase scalability.
